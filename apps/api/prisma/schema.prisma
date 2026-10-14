@@ -1,0 +1,166 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  TRAVELER
+  MERCHANT
+  ADMIN
+}
+
+enum DayOfWeek {
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+}
+
+model User {
+  id           String        @id @default(uuid()) @db.Uuid
+  name         String        @db.VarChar(100)
+  email        String        @unique @db.VarChar(255)
+  passwordHash String        @map("password_hash") @db.VarChar(255)
+  role         UserRole      @default(TRAVELER)
+  avatarUrl    String?       @map("avatar_url")
+  isVerified   Boolean       @default(false) @map("is_verified")
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  places        Place[]
+  reviews       Review[]
+  reviewReplies ReviewReply[]
+  favorites     Favorite[]
+
+  @@map("users")
+}
+
+model Category {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique @db.VarChar(50)
+  slug      String   @unique @db.VarChar(60)
+  iconName  String   @map("icon_name") @db.VarChar(50)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  places Place[]
+
+  @@map("categories")
+}
+
+model Place {
+  id           String   @id @default(uuid()) @db.Uuid
+  ownerId      String?  @map("owner_id") @db.Uuid
+  categoryId   String   @map("category_id") @db.Uuid
+  name         String   @db.VarChar(150)
+  slug         String   @unique @db.VarChar(180)
+  description  String
+  phone        String?  @db.VarChar(20)
+  websiteUrl   String?  @map("website_url")
+
+  street       String   @db.VarChar(150)
+  number       String   @db.VarChar(20)
+  neighborhood String   @db.VarChar(100)
+  city         String   @db.VarChar(100)
+  state        String   @db.VarChar(50)
+  postalCode   String   @map("postal_code") @db.VarChar(20)
+
+  latitude     Float    @db.DoublePrecision
+  longitude    Float    @db.DoublePrecision
+
+  averageRating Decimal @default(0.0) @map("average_rating") @db.Decimal(2, 1)
+  totalReviews  Int     @default(0) @map("total_reviews")
+  isActive      Boolean @default(true) @map("is_active")
+  isVerified    Boolean @default(false) @map("is_verified")
+
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  owner     User?        @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  category  Category     @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  hours     PlaceHour[]
+  photos    PlacePhoto[]
+  reviews   Review[]
+  favorites Favorite[]
+
+  @@index([city, categoryId], map: "idx_places_city_category")
+  @@index([latitude, longitude], map: "idx_places_coordinates")
+  @@map("places")
+}
+
+model PlaceHour {
+  id        String    @id @default(uuid()) @db.Uuid
+  placeId   String    @map("place_id") @db.Uuid
+  day       DayOfWeek
+  openTime  String?   @map("open_time") @db.VarChar(5)
+  closeTime String?   @map("close_time") @db.VarChar(5)
+  isClosed  Boolean   @default(false) @map("is_closed")
+
+  place Place @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  @@unique([placeId, day])
+  @@map("place_hours")
+}
+
+model PlacePhoto {
+  id           String   @id @default(uuid()) @db.Uuid
+  placeId      String   @map("place_id") @db.Uuid
+  url          String
+  caption      String?  @db.VarChar(100)
+  displayOrder Int      @default(0) @map("display_order")
+  isCover      Boolean  @default(false) @map("is_cover")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  place Place @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  @@map("place_photos")
+}
+
+model Review {
+  id        String   @id @default(uuid()) @db.Uuid
+  placeId   String   @map("place_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  rating    Int      @db.SmallInt
+  comment   String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  place Place @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reply ReviewReply?
+
+  @@unique([placeId, userId])
+  @@index([placeId, rating])
+  @@map("reviews")
+}
+
+model ReviewReply {
+  id         String   @id @default(uuid()) @db.Uuid
+  reviewId   String   @unique @map("review_id") @db.Uuid
+  merchantId String   @map("merchant_id") @db.Uuid
+  comment    String
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  review   Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  merchant User   @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@map("review_replies")
+}
+
+model Favorite {
+  userId    String   @map("user_id") @db.Uuid
+  placeId   String   @map("place_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  place Place @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, placeId])
+  @@map("favorites")
+}
