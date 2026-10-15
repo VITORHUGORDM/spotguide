@@ -78,13 +78,38 @@ pnpm dev
 
 | Método | Rota | Descrição | Nível de Acesso |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/api/v1/auth/register` | Cadastro de usuário | Público (Rate-Limited) |
+| `POST` | `/api/v1/auth/register` | Cadastro de usuário (Viajante / Comerciante) | Público (Rate-Limited) |
 | `POST` | `/api/v1/auth/login` | Login e emissão de JWT | Público (5 req/min) |
 | `GET` | `/api/v1/auth/me` | Dados do usuário autenticado | Autenticado |
 | `GET` | `/api/v1/categories` | Listagem de categorias | Público |
 | `GET` | `/api/v1/places` | Busca e filtros (Raio GPS, Cidade, Categoria) | Público |
 | `GET` | `/api/v1/places/slug/:slug`| Detalhes do local (SEO-Friendly) | Público |
+| `GET` | `/api/v1/places/id/:id` | Detalhes do local por UUID | Público |
+| `GET` | `/api/v1/places/merchant/my-places` | Lista os estabelecimentos do comerciante logado | Comerciante / Admin |
 | `POST` | `/api/v1/places` | Cadastro de estabelecimento | Comerciante / Admin |
 | `PUT` | `/api/v1/places/:id` | Atualização do estabelecimento | Dono do Local (Anti-IDOR) |
+| `DELETE`| `/api/v1/places/:id` | Exclusão do estabelecimento | Dono do Local (Anti-IDOR) |
 | `GET` | `/api/v1/reviews/place/:placeId` | Avaliações do local | Público |
 | `POST` | `/api/v1/reviews/place/:placeId` | Envio de avaliação atômica | Autenticado (Viajante) |
+| `POST` | `/api/v1/reviews/:reviewId/reply`| Resposta do comerciante à avaliação | Dono do Local (Comerciante) |
+
+---
+
+## 🌐 Rotas do Frontend Web (Next.js)
+
+* `/` - Página Inicial (Hero com busca direcionada, categorias e destinos populares)
+* `/locais` - Exploração com busca dinâmica, filtro por cidade, categoria e notas
+* `/locais/[slug]` - Página pública do local com rotas no Google Maps, galeria, horários e avaliações
+* `/comerciante` - Portal e Painel com métricas, listagem e gestão dos estabelecimentos cadastrados
+* `/comerciante/locais/novo` - Formulário completo para cadastrar novo estabelecimento com GPS e horários
+* `/comerciante/locais/[id]/editar` - Edição protegida de dados do estabelecimento
+* `/login` - Autenticação com redirecionamento contextual por papel
+* `/cadastro` - Criação de conta com seleção de perfil (Viajante ou Comerciante)
+
+---
+
+## 📱 Rotas Mobile (Expo / React Native)
+
+* `/` (`app/index.tsx`) - Feed com GPS ativo, busca instantânea e categorias
+* `/places/[slug]` (`app/places/[slug].tsx`) - Detalhes do estabelecimento, traçado de rotas com GPS e discador rápido
+

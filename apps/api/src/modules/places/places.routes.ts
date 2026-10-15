@@ -14,6 +14,19 @@ export async function placesRoutes(app: FastifyInstance) {
   // Rotas Públicas (Viajantes e Visitantes)
   app.get('/', placesController.search.bind(placesController));
   app.get('/slug/:slug', placesController.getBySlug.bind(placesController));
+
+  // Rota de Estabelecimentos do Comerciante Autenticado (Registrada antes de rotas com :id)
+  app.get(
+    '/merchant/my-places',
+    {
+      preHandler: [authGuard, roleGuard(['MERCHANT', 'ADMIN'])],
+    },
+    placesController.getMyPlaces.bind(placesController)
+  );
+
+  // Rota de autocomplete de cidades
+  app.get('/cities', placesController.getCities.bind(placesController));
+
   app.get('/id/:id', placesController.getById.bind(placesController));
 
   // Rotas Protegidas - Apenas Comerciantes e Administradores
@@ -32,5 +45,13 @@ export async function placesRoutes(app: FastifyInstance) {
       preHandler: [authGuard, roleGuard(['MERCHANT', 'ADMIN']), placeOwnershipGuard],
     },
     placesController.update.bind(placesController)
+  );
+
+  app.delete(
+    '/:id',
+    {
+      preHandler: [authGuard, roleGuard(['MERCHANT', 'ADMIN']), placeOwnershipGuard],
+    },
+    placesController.delete.bind(placesController)
   );
 }

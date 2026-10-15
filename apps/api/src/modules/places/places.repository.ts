@@ -147,4 +147,121 @@ export class PlacesRepository {
       },
     });
   }
+
+  async findByOwnerId(ownerId: string) {
+    const places = await prisma.place.findMany({
+      where: { ownerId },
+      include: {
+        category: true,
+        photos: {
+          where: { isCover: true },
+          take: 1,
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return places.map((p) => ({
+      id: p.id,
+      name: p.name,
+      slug: p.slug,
+      description: p.description,
+      city: p.city,
+      state: p.state,
+      isActive: p.isActive,
+      category: {
+        id: p.category.id,
+        name: p.category.name,
+        slug: p.category.slug,
+        iconName: p.category.iconName,
+      },
+      coverPhotoUrl: p.photos[0]?.url ?? null,
+      averageRating: Number(p.averageRating),
+      totalReviews: p.totalReviews,
+      createdAt: p.createdAt.toISOString(),
+      updatedAt: p.updatedAt.toISOString(),
+    }));
+  }
+
+  async delete(id: string) {
+    return prisma.place.delete({
+      where: { id },
+    });
+  }
+
+  async getCities(search?: string) {
+    const dbCities = await prisma.place.groupBy({
+      by: ['city', 'state'],
+      where: {
+        isActive: true,
+        ...(search
+          ? {
+              OR: [
+                { city: { contains: search, mode: 'insensitive' } },
+                { state: { contains: search, mode: 'insensitive' } },
+              ],
+            }
+          : {}),
+      },
+      _count: {
+        id: true,
+      },
+      orderBy: {
+        _count: {
+          id: 'desc',
+        },
+      },
+      take: 10,
+    });
+
+    const popularCities = [
+      { city: 'Gramado', state: 'RS' },
+      { city: 'Campos do Jordão', state: 'SP' },
+      { city: 'Florianópolis', state: 'SC' },
+      { city: 'Rio de Janeiro', state: 'RJ' },
+      { city: 'São Paulo', state: 'SP' },
+      { city: 'Curitiba', state: 'PR' },
+      { city: 'Balneário Camboriú', state: 'SC' },
+      { city: 'Porto Alegre', state: 'RS' },
+      { city: 'Salvador', state: 'BA' },
+      { city: 'Belo Horizonte', state: 'MG' },
+      { city: 'Bonito', state: 'MS' },
+      { city: 'Paraty', state: 'RJ' },
+      { city: 'Monte Verde', state: 'MG' },
+      { city: 'Foz do Iguaçu', state: 'PR' },
+      { city: 'Jericoacoara', state: 'CE' },
+      { city: 'Maragogi', state: 'AL' },
+    ];
+
+    const cityMap = new Map<string, { city: string; state: string; count: number }>();
+
+    for (const item of dbCities) {
+      cityMap.set(`${item.city.toLowerCase()}-${item.state.toLowerCase()}`, {
+        city: item.city,
+        state: item.state,
+        count: item._count.id,
+      });
+    }
+
+    const filteredPopular = search
+      ? popularCities.filter(
+          (c) =>
+            c.city.toLowerCase().includes(search.toLowerCase()) ||
+            c.state.toLowerCase().includes(search.toLowerCase())
+        )
+      : popularCities;
+
+    for (const item of filteredPopular) {
+      const key = `${item.city.toLowerCase()}-${item.state.toLowerCase()}`;
+      if (!cityMap.has(key)) {
+        cityMap.set(key, {
+          city: item.city,
+          state: item.state,
+          count: 0,
+        });
+      }
+    }
+
+    return Array.from(cityMap.values()).slice(0, 10);
+  }
 }

@@ -1,20 +1,22 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { AuthProvider } from '../lib/auth-context';
+import { Navbar } from '../components/navbar';
 
 export const metadata: Metadata = {
   title: {
-    default: 'Guia Turístico & Comercial - Descubra o Melhor da Sua Cidade',
-    template: '%s | Guia Turístico',
+    default: 'SpotGuide • O Guia Turístico & Comercial Inteligente',
+    template: '%s | SpotGuide',
   },
   description:
-    'Encontre os melhores restaurantes, bares, hotéis, atrações turísticas e comércios locais com avaliações reais e rotas integradas.',
-  keywords: ['guia turístico', 'restaurantes', 'hotéis', 'pontos turísticos', 'viagem', 'gastronomia'],
+    'Encontre os melhores restaurantes, bares, hotéis, atrações turísticas e comércios locais com rotas no Google Maps e avaliações autênticas.',
+  keywords: ['guia turístico', 'restaurantes', 'hotéis', 'pontos turísticos', 'viagem', 'gastronomia', 'spotguide'],
   openGraph: {
     type: 'website',
     locale: 'pt_BR',
-    url: 'https://guiaturistico.com.br',
-    siteName: 'Guia Turístico',
-    title: 'Guia Turístico & Comercial',
+    url: 'https://spotguide.com.br',
+    siteName: 'SpotGuide',
+    title: 'SpotGuide • Guia Turístico & Comercial',
     description: 'Encontre os melhores restaurantes, bares, hotéis e atrações turísticas.',
   },
 };
@@ -25,30 +27,32 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
-      <body className="min-h-screen flex flex-col antialiased">
-        <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
-          <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">🗺️</span>
-              <span className="font-bold text-xl text-slate-900 tracking-tight">GuiaTurístico</span>
+    <html lang="pt-BR" className="dark">
+      <body className="min-h-screen flex flex-col antialiased bg-[#030305] text-slate-100 selection:bg-purple-600 selection:text-white">
+        <AuthProvider>
+          <Navbar />
+          <main className="flex-1">{children}</main>
+          <footer className="relative bg-[#020204] border-t border-white/[0.08] text-slate-400 py-12 text-sm overflow-hidden">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-24 bg-purple-600/10 blur-3xl rounded-full pointer-events-none" />
+            <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-6 relative z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-sm shadow-[0_0_15px_rgba(168,85,247,0.4)]">
+                  🗺️
+                </div>
+                <div>
+                  <span className="font-extrabold text-white tracking-tight text-base">SpotGuide</span>
+                  <span className="text-[11px] text-slate-500 block">A Nova Era do Turismo & Comércio Local</span>
+                </div>
+              </div>
+              <p className="text-xs text-slate-500">© {new Date().getFullYear()} SpotGuide Brasil. Todos os direitos reservados.</p>
+              <div className="flex items-center gap-5 text-xs font-medium">
+                <a href="/locais" className="hover:text-purple-400 transition">Explorar Locais</a>
+                <a href="/comerciante" className="hover:text-purple-400 transition">Painel do Comerciante</a>
+                <a href="/login" className="hover:text-purple-400 transition">Entrar</a>
+              </div>
             </div>
-            <nav className="flex items-center gap-4 text-sm font-medium text-slate-600">
-              <a href="/locais" className="hover:text-blue-600 transition">Explorar Locais</a>
-              <a href="/comerciante" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                Para Comerciantes
-              </a>
-            </nav>
-          </div>
-        </header>
-
-        <main className="flex-1">{children}</main>
-
-        <footer className="bg-slate-900 text-slate-400 py-12 text-sm border-t border-slate-800">
-          <div className="max-w-7xl mx-auto px-4 text-center">
-            <p>© {new Date().getFullYear()} Guia Turístico & Comercial. Todos os direitos reservados.</p>
-          </div>
-        </footer>
+          </footer>
+        </AuthProvider>
       </body>
     </html>
   );

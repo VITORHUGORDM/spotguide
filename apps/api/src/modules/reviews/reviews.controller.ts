@@ -1,5 +1,5 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
-import { CreateReviewInputSchema } from '@guia/contracts';
+import { CreateReviewInputSchema, ReplyReviewInputSchema } from '@guia/contracts';
 import { ReviewsService } from './reviews.service.js';
 
 export class ReviewsController {
@@ -18,5 +18,14 @@ export class ReviewsController {
 
     const review = await this.reviewsService.createReview(placeId, userId, body);
     return reply.status(201).send(review);
+  }
+
+  async reply(request: FastifyRequest, reply: FastifyReply) {
+    const { reviewId } = request.params as { reviewId: string };
+    const body = ReplyReviewInputSchema.parse(request.body);
+    const merchantId = request.user.sub;
+
+    const replyRecord = await this.reviewsService.replyReview(reviewId, merchantId, body);
+    return reply.status(200).send(replyRecord);
   }
 }

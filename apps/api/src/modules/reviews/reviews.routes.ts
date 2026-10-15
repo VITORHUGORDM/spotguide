@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { ReviewsService } from './reviews.service.js';
 import { ReviewsController } from './reviews.controller.js';
 import { authGuard } from '../../shared/middlewares/auth.guard.js';
+import { roleGuard } from '../../shared/middlewares/role.guard.js';
 
 export async function reviewsRoutes(app: FastifyInstance) {
   const reviewsService = new ReviewsService();
@@ -23,5 +24,14 @@ export async function reviewsRoutes(app: FastifyInstance) {
       },
     },
     reviewsController.create.bind(reviewsController)
+  );
+
+  // Resposta do comerciante à avaliação
+  app.post(
+    '/:reviewId/reply',
+    {
+      preHandler: [authGuard, roleGuard(['MERCHANT', 'ADMIN'])],
+    },
+    reviewsController.reply.bind(reviewsController)
   );
 }

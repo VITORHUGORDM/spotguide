@@ -23,8 +23,8 @@ export const CreatePlaceInputSchema = z.object({
   categoryId: z.string().uuid('ID de categoria inválido'),
   name: z.string().trim().min(2, 'Nome deve ter no mínimo 2 caracteres').max(150),
   description: z.string().trim().min(10, 'Descrição deve ter no mínimo 10 caracteres'),
-  phone: z.string().trim().max(20).optional(),
-  websiteUrl: z.string().trim().url('URL de website inválida').optional(),
+  phone: z.string().trim().max(20).optional().nullable(),
+  websiteUrl: z.union([z.string().trim().url('URL de website inválida'), z.literal('')]).optional().nullable(),
   
   // Endereço
   street: z.string().trim().min(2).max(150),
@@ -37,6 +37,9 @@ export const CreatePlaceInputSchema = z.object({
   // Coordenadas Geográficas
   latitude: z.number().min(-90).max(90),
   longitude: z.number().min(-180).max(180),
+
+  // Foto de Capa (URL)
+  coverPhotoUrl: z.union([z.string().trim().url('URL da imagem inválida'), z.literal('')]).optional().nullable(),
   
   // Horários opcionais
   hours: z.array(PlaceHourSchema).optional(),

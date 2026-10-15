@@ -59,8 +59,8 @@ export class PlacesService {
         name: data.name,
         slug,
         description: data.description,
-        phone: data.phone,
-        websiteUrl: data.websiteUrl,
+        phone: data.phone || null,
+        websiteUrl: data.websiteUrl || null,
         street: data.street,
         number: data.number,
         neighborhood: data.neighborhood,
@@ -69,6 +69,15 @@ export class PlacesService {
         postalCode: data.postalCode,
         latitude: data.latitude,
         longitude: data.longitude,
+        ...(data.coverPhotoUrl && {
+          photos: {
+            create: {
+              url: data.coverPhotoUrl,
+              isCover: true,
+              caption: data.name,
+            },
+          },
+        }),
         ...(data.hours && {
           hours: {
             createMany: {
@@ -85,8 +94,13 @@ export class PlacesService {
       include: {
         category: true,
         hours: true,
+        photos: true,
       },
     });
+  }
+
+  async findByOwnerId(ownerId: string) {
+    return this.placesRepository.findByOwnerId(ownerId);
   }
 
   async update(id: string, data: UpdatePlaceInput) {
@@ -95,8 +109,8 @@ export class PlacesService {
       data: {
         ...(data.name && { name: data.name }),
         ...(data.description && { description: data.description }),
-        ...(data.phone !== undefined && { phone: data.phone }),
-        ...(data.websiteUrl !== undefined && { websiteUrl: data.websiteUrl }),
+        ...(data.phone !== undefined && { phone: data.phone || null }),
+        ...(data.websiteUrl !== undefined && { websiteUrl: data.websiteUrl || null }),
         ...(data.street && { street: data.street }),
         ...(data.number && { number: data.number }),
         ...(data.neighborhood && { neighborhood: data.neighborhood }),
@@ -107,5 +121,17 @@ export class PlacesService {
         ...(data.longitude !== undefined && { longitude: data.longitude }),
       },
     });
+  }
+
+  async delete(id: string) {
+    const place = await this.placesRepository.findById(id);
+    if (!place) {
+      throw new AppError('Estabelecimento não encontrado.', 404);
+    }
+    return this.placesRepository.delete(id);
+  }
+
+  async getCities(search?: string) {
+    return this.placesRepository.getCities(search);
   }
 }

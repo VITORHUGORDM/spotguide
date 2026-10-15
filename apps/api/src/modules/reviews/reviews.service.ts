@@ -1,4 +1,4 @@
-import { CreateReviewInput } from '@guia/contracts';
+import { CreateReviewInput, ReplyReviewInput } from '@guia/contracts';
 import { prisma } from '../../shared/database/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 
@@ -74,6 +74,37 @@ export class ReviewsService {
       });
 
       return review;
+    });
+  }
+
+  async replyReview(reviewId: string, merchantId: string, data: ReplyReviewInput) {
+    const review = await prisma.review.findUnique({
+      where: { id: reviewId },
+      include: {
+        place: {
+          select: { ownerId: true },
+        },
+      },
+    });
+
+    if (!review) {
+      throw new AppError('Avaliação não encontrada.', 404);
+    }
+
+    if (review.place.ownerId !== merchantId) {
+      throw new AppError('Você só pode responder avaliações do seu próprio estabelecimento.', 403);
+    }
+
+    return prisma.reviewReply.upsert({
+      where: { reviewId },
+      create: {
+        reviewId,
+        merchantId,
+        comment: data.comment,
+      },
+      update: {
+        comment: data.comment,
+      },
     });
   }
 }

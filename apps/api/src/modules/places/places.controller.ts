@@ -39,4 +39,22 @@ export class PlacesController {
     const updated = await this.placesService.update(id, body);
     return reply.status(200).send(updated);
   }
+
+  async getMyPlaces(request: FastifyRequest, reply: FastifyReply) {
+    const ownerId = request.user.sub;
+    const places = await this.placesService.findByOwnerId(ownerId);
+    return reply.status(200).send(places);
+  }
+
+  async delete(request: FastifyRequest, reply: FastifyReply) {
+    const { id } = request.params as { id: string };
+    await this.placesService.delete(id);
+    return reply.status(204).send();
+  }
+
+  async getCities(request: FastifyRequest, reply: FastifyReply) {
+    const { q } = request.query as { q?: string };
+    const cities = await this.placesService.getCities(q);
+    return reply.status(200).send(cities);
+  }
 }
