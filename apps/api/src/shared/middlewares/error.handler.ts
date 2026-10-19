@@ -34,7 +34,15 @@ export function errorHandler(error: FastifyError, request: FastifyRequest, reply
     });
   }
 
-  // 4. Erros não tratados (Internal Server Error)
+  // 4. ID malformado (P2023) ou registro inexistente (P2025) vindos do Prisma
+  if ((error as any).code === 'P2023') {
+    return reply.status(400).send({ statusCode: 400, error: 'Bad Request', message: 'Identificador inválido.' });
+  }
+  if ((error as any).code === 'P2025') {
+    return reply.status(404).send({ statusCode: 404, error: 'Not Found', message: 'Registro não encontrado.' });
+  }
+
+  // 5. Erros não tratados (Internal Server Error)
   // SEGURANÇA: NUNCA expor stack traces ou dados sensíveis do banco para o cliente
   request.log.error(error);
 

@@ -26,11 +26,11 @@ export class PlacesRepository {
           c.slug as "categorySlug",
           c.icon_name as "categoryIcon",
           (
-            6371 * acos(
+            6371 * acos(LEAST(1.0, GREATEST(-1.0,
               cos(radians(${lat})) * cos(radians(p.latitude)) *
               cos(radians(p.longitude) - radians(${lng})) +
               sin(radians(${lat})) * sin(radians(p.latitude))
-            )
+            )))
           ) AS "distanceKm",
           (
             SELECT url FROM place_photos 
@@ -45,11 +45,11 @@ export class PlacesRepository {
           ${minRating ? Prisma.sql`AND p.average_rating >= ${minRating}` : Prisma.empty}
           ${search ? Prisma.sql`AND (LOWER(p.name) LIKE LOWER(${'%' + search + '%'}) OR LOWER(p.description) LIKE LOWER(${'%' + search + '%'}))` : Prisma.empty}
           AND (
-            6371 * acos(
+            6371 * acos(LEAST(1.0, GREATEST(-1.0,
               cos(radians(${lat})) * cos(radians(p.latitude)) *
               cos(radians(p.longitude) - radians(${lng})) +
               sin(radians(${lat})) * sin(radians(p.latitude))
-            )
+            )))
           ) <= ${radiusKm}
         ORDER BY "distanceKm" ASC
         LIMIT ${limit} OFFSET ${offset};

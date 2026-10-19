@@ -1,6 +1,7 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { RegisterInputSchema, LoginInputSchema } from '@guia/contracts';
 import { AuthService } from './auth.service.js';
+import { env } from '../../shared/env.js';
 
 export class AuthController {
   constructor(private authService: AuthService) {}
@@ -12,13 +13,13 @@ export class AuthController {
     const user = await this.authService.register(body);
 
     const accessToken = await reply.jwtSign(
-      { sub: user.id, role: user.role, email: user.email },
-      { expiresIn: '15m' }
+      { sub: user.id, role: user.role, email: user.email, type: 'access' },
+      { expiresIn: env.JWT_EXPIRES_IN }
     );
 
     const refreshToken = await reply.jwtSign(
-      { sub: user.id, role: user.role, email: user.email },
-      { expiresIn: '7d' }
+      { sub: user.id, role: user.role, email: user.email, type: 'refresh' },
+      { expiresIn: env.REFRESH_TOKEN_EXPIRES_IN }
     );
 
     return reply.status(201).send({
@@ -34,13 +35,13 @@ export class AuthController {
     const user = await this.authService.validateCredentials(body);
 
     const accessToken = await reply.jwtSign(
-      { sub: user.id, role: user.role, email: user.email },
-      { expiresIn: '15m' }
+      { sub: user.id, role: user.role, email: user.email, type: 'access' },
+      { expiresIn: env.JWT_EXPIRES_IN }
     );
 
     const refreshToken = await reply.jwtSign(
-      { sub: user.id, role: user.role, email: user.email },
-      { expiresIn: '7d' }
+      { sub: user.id, role: user.role, email: user.email, type: 'refresh' },
+      { expiresIn: env.REFRESH_TOKEN_EXPIRES_IN }
     );
 
     return reply.status(200).send({

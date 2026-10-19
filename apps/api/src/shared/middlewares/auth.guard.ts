@@ -3,6 +3,8 @@ import { FastifyReply, FastifyRequest } from 'fastify';
 export async function authGuard(request: FastifyRequest, reply: FastifyReply) {
   try {
     await request.jwtVerify();
+    // Refresh tokens não podem ser usados para acessar recursos
+    if (request.user.type !== 'access') throw new Error('Tipo de token inválido');
   } catch (err) {
     return reply.status(401).send({
       statusCode: 401,
