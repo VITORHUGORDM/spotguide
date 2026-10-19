@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="pt-BR" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>SpotGuide • trailer</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script src="assets/rms.js"></script>
+    <style>
+      @font-face {
+        font-family: "Archivo SG";
+        src: url("assets/fonts/archivo.woff2") format("woff2");
+        font-weight: 100 900;
+        font-stretch: 62% 125%;
+      }
+      @font-face {
+        font-family: "Plex SG";
+        src: url("assets/fonts/plex-mono.woff2") format("woff2");
+        font-weight: 400;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #0b0a17;
+        color: #faf6ee;
+        font-family: "Archivo SG", system-ui, sans-serif;
+        font-variation-settings: "wdth" 106;
+      }
+      #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #0b0a17; }
+      .clip { position: absolute; inset: 0; width: 1920px; height: 1080px; overflow: hidden; }
+
+      /* brilho coral que respira com a música */
+      #glow {
+        position: absolute; left: 50%; top: 52%; width: 1500px; height: 900px; margin: -450px 0 0 -750px;
+        background: radial-gradient(ellipse at center, rgba(242,166,90,.42) 0%, rgba(217,105,122,.22) 38%, rgba(59,42,120,0) 72%);
+        filter: blur(30px); opacity: .2; pointer-events: none;
+      }
+
+      /* prints reais do site */
+      .shot { position: absolute; inset: 0; width: 1920px; height: 1080px; object-fit: cover; will-change: transform; }
+      .shade {
+        position: absolute; inset: 0; pointer-events: none;
+        background:
+          linear-gradient(to top, rgba(11,10,23,.96) 0%, rgba(11,10,23,.7) 18%, rgba(11,10,23,.25) 34%, rgba(11,10,23,0) 52%),
+          radial-gradient(ellipse at center, rgba(11,10,23,0) 55%, rgba(11,10,23,.55) 100%);
+      }
+
+      .cap { position: absolute; left: 96px; bottom: 92px; max-width: 1400px; }
+      .tag { font: 400 26px/1 "Plex SG", monospace; color: #f2a65a; letter-spacing: .02em; margin-bottom: 18px; }
+      .line { display: block; font-weight: 580; font-size: 78px; line-height: 1.02; letter-spacing: -0.045em; text-shadow: 0 6px 40px rgba(0,0,0,.55); }
+      .line em { font-style: normal; color: #f2a65a; }
+      .pill {
+        position: absolute; padding: 16px 30px; border-radius: 999px;
+        background: rgba(250,246,238,.94); color: #0b0a17;
+        font: 560 32px/1 "Archivo SG", sans-serif; letter-spacing: -0.02em;
+        box-shadow: 0 14px 40px rgba(0,0,0,.45);
+      }
+
+      /* pergunta */
+      #sA { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 6px; }
+      #sA .big { font-weight: 560; font-size: 168px; line-height: .98; letter-spacing: -0.055em; }
+      #sA .big em { font-style: normal; color: #f2a65a; }
+      #sA .mono { font: 400 26px/1 "Plex SG", monospace; color: #faf6ee; opacity: .7; margin-bottom: 26px; }
+
+      /* números */
+      #sI { background: linear-gradient(180deg, #1b1647 0%, #3b2a78 28%, #8a4a8f 52%, #d9697a 74%, #f2a65a 100%); }
+      .nuv { position: absolute; max-width: none; opacity: .9; }
+      .row { position: absolute; left: 150px; right: 150px; display: flex; align-items: baseline; justify-content: space-between; border-bottom: 2px solid rgba(250,246,238,.35); padding-bottom: 8px; }
+      .row .n { font-weight: 560; font-size: 190px; line-height: 1; letter-spacing: -0.06em; text-shadow: 0 8px 50px rgba(27,22,71,.55); }
+      .row .l { font: 400 40px/1 "Plex SG", monospace; text-shadow: 0 4px 24px rgba(27,22,71,.6); }
+
+      /* encerramento */
+      #sJ { background: linear-gradient(180deg, #0b0a17 0%, #1b1647 38%, #5b3a86 72%, #b85a86 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 34px; }
+      #sJ .mark { display: flex; align-items: flex-start; gap: 14px; font-weight: 560; font-size: 250px; line-height: .92; letter-spacing: -0.06em; }
+      #sJ .mark svg { width: 70px; height: 94px; margin-top: 22px; color: #f2a65a; }
+      #sJ .sub { font-weight: 460; font-size: 40px; line-height: 1.28; max-width: 1240px; color: #faf6ee; text-shadow: 0 4px 30px rgba(0,0,0,.45); }
+
+      #flash { position: absolute; inset: 0; background: #faf6ee; opacity: 0; pointer-events: none; z-index: 40; }
+      #vig { position: absolute; inset: 0; z-index: 30; pointer-events: none; background: radial-gradient(ellipse at center, rgba(11,10,23,0) 50%, rgba(11,10,23,.7) 100%); opacity: .5; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-width="1920" data-height="1080" data-start="0" data-duration="22">
+      <div id="glow"></div>
+
+      <!-- A · pergunta (0 – 2.88) -->
+      <section id="sA" class="clip" data-start="0" data-duration="2.9" data-track-index="1">
+        <div class="mono" id="a-mono">[ guia turístico e comercial ]</div>
+        <div class="big" id="a-1">E se o guia turístico</div>
+        <div class="big" id="a-2">fosse <em>uma ilha?</em></div>
+      </section>
+
+      <!-- B · hero (2.88 – 5.17) -->
+      <section id="sB" class="clip" data-start="2.88" data-duration="2.29" data-track-index="2">
+        <img class="shot" id="b-img" src="assets/shots/hero.png" alt="Home do SpotGuide com a ilha flutuante" />
+        <div class="shade" style="background: radial-gradient(ellipse at center, rgba(11,10,23,0) 55%, rgba(11,10,23,.5) 100%);"></div>
+        <div class="cap" style="left: 84px; bottom: auto; top: 330px; max-width: 560px;"><div class="tag" id="b-tag">[ hero ]</div><span class="line" id="b-line">Uma ilha<br />só do <em>SpotGuide</em></span></div>
+      </section>
+
+      <!-- C · nuvens (5.17 – 7.00) -->
+      <section id="sC" class="clip" data-start="5.17" data-duration="1.83" data-track-index="3">
+        <img class="shot" id="c-img" src="assets/shots/nuvens.png" alt="Câmera descendo para dentro das nuvens" />
+        <div class="shade"></div>
+        <div class="cap"><div class="tag" id="c-tag">[ ao rolar ]</div><span class="line" id="c-line">A câmera <em>entra nas nuvens</em></span></div>
+      </section>
+
+      <!-- D · cidades (7.00 – 8.82) -->
+      <section id="sD" class="clip" data-start="7.0" data-duration="1.82" data-track-index="4">
+        <img class="shot" id="d-img" src="assets/shots/cidades.png" alt="Cartões das seis cidades" />
+        <div class="shade"></div>
+        <div class="cap"><div class="tag" id="d-tag">[ destinos ]</div><span class="line" id="d-line">6 cidades. <em>25 lugares</em> no guia.</span></div>
+      </section>
+
+      <!-- E · página da cidade (8.82 – 10.20) -->
+      <section id="sE" class="clip" data-start="8.82" data-duration="1.38" data-track-index="5">
+        <img class="shot" id="e-img" src="assets/shots/cidade.png" alt="Página de Gramado" />
+        <div class="shade"></div>
+        <div class="cap"><div class="tag" id="e-tag">[ gramado ]</div><span class="line" id="e-line">Página própria <em>por cidade</em></span></div>
+      </section>
+
+      <!-- F · mapa (10.20 – 12.48) -->
+      <section id="sF" class="clip" data-start="10.2" data-duration="2.28" data-track-index="6">
+        <img class="shot" id="f-img" src="assets/shots/mapa.png" alt="Mapa com pins e popup" />
+        <div class="shade"></div>
+        <div class="pill" id="f-pill" style="right: 110px; top: 92px;">Perto de mim · 25 km</div>
+        <div class="cap"><div class="tag" id="f-tag">[ mapa ]</div><span class="line" id="f-line">Pin, nota e <em>rota</em></span></div>
+      </section>
+
+      <!-- G · lista (12.48 – 13.87) -->
+      <section id="sG" class="clip" data-start="12.48" data-duration="1.39" data-track-index="7">
+        <img class="shot" id="g-img" src="assets/shots/lista.png" alt="Catálogo com filtros" />
+        <div class="shade"></div>
+        <div class="cap"><div class="tag" id="g-tag">[ catálogo ]</div><span class="line" id="g-line">Filtro por <em>categoria e nota</em></span></div>
+      </section>
+
+      <!-- H · fotos (13.87 – 16.16) -->
+      <section id="sH" class="clip" data-start="13.87" data-duration="2.29" data-track-index="8">
+        <img class="shot" id="h-img" src="assets/shots/fotos.png" alt="Painel do comerciante enviando fotos" />
+        <div class="shade"></div>
+        <div class="cap"><div class="tag" id="h-tag">[ comerciante ]</div><span class="line" id="h-line">Envia as fotos. <em>A primeira vira capa.</em></span></div>
+      </section>
+
+      <!-- I · números (16.16 – 19.80) -->
+      <section id="sI" class="clip" data-start="16.16" data-duration="3.64" data-track-index="3">
+        <img class="nuv" id="i-n1" src="assets/img/nuvem-6.webp" alt="" style="width: 1500px; left: -200px; bottom: -120px;" />
+        <img class="nuv" id="i-n2" src="assets/img/nuvem-1.webp" alt="" style="width: 1100px; right: -180px; bottom: 40px; transform: scaleX(-1);" />
+        <div class="row" id="i-r1" style="top: 150px;"><span class="n">25</span><span class="l">lugares no guia</span></div>
+        <div class="row" id="i-r2" style="top: 400px;"><span class="n">6</span><span class="l">cidades com página própria</span></div>
+        <div class="row" id="i-r3" style="top: 650px;"><span class="n" style="font-size: 120px; padding-top: 38px;">mapa · fotos · SEO</span><span class="l">tudo no ar</span></div>
+      </section>
+
+      <!-- J · encerramento (19.80 – 22.00) -->
+      <section id="sJ" class="clip" data-start="19.8" data-duration="2.2" data-track-index="4">
+        <div class="mark" id="j-mark">
+          <span>SpotGuide</span>
+          <svg viewBox="0 0 24 32" aria-hidden="true"><path fill="currentColor" d="M12 0C5.4 0 0 5.3 0 11.8 0 20.5 12 32 12 32s12-11.5 12-20.2C24 5.3 18.6 0 12 0Zm0 7.2a4.6 4.6 0 1 1 0 9.2 4.6 4.6 0 0 1 0-9.2Z"/></svg>
+        </div>
+        <div class="sub" id="j-sub">Restaurantes, bares, hotéis e pontos turísticos perto de você, com rota e nota de quem foi.</div>
+      </section>
+
+      <div id="vig"></div>
+      <div id="flash"></div>
+    </div>
+
+    <!-- música: trecho de "WE ON GO" (fade já aplicado no arquivo) -->
+    <audio id="bg-music" data-start="0" data-duration="22" data-track-index="10" data-volume="0.8" src="assets/music/we-on-go.mp3"></audio>
+    <!-- SFX: poucos, no começo de cada movimento -->
+    <audio id="sfx-q" data-start="1.4" data-duration="0.19" data-track-index="11" data-volume="0.45" src="assets/sfx/drop_002.ogg"></audio>
+    <audio id="sfx-slam" data-start="2.78" data-duration="0.18" data-track-index="12" data-volume="1" src="assets/sfx/impactSoft_medium_001.ogg"></audio>
+    <audio id="sfx-c" data-start="5.12" data-duration="0.11" data-track-index="13" data-volume="0.55" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="sfx-d" data-start="6.97" data-duration="0.11" data-track-index="14" data-volume="0.55" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="sfx-f" data-start="10.15" data-duration="0.11" data-track-index="15" data-volume="0.55" src="assets/sfx/drop_001.ogg"></audio>
+    <audio id="sfx-pill" data-start="10.9" data-duration="0.1" data-track-index="16" data-volume="0.6" src="assets/sfx/click1.ogg"></audio>
+    <audio id="sfx-h" data-start="13.82" data-duration="0.18" data-track-index="17" data-volume="0.7" src="assets/sfx/impactSoft_medium_001.ogg"></audio>
+    <audio id="sfx-r1" data-start="16.13" data-duration="0.19" data-track-index="18" data-volume="0.65" src="assets/sfx/drop_002.ogg"></audio>
+    <audio id="sfx-r2" data-start="17.04" data-duration="0.19" data-track-index="19" data-volume="0.65" src="assets/sfx/drop_002.ogg"></audio>
+    <audio id="sfx-r3" data-start="17.95" data-duration="0.19" data-track-index="20" data-volume="0.65" src="assets/sfx/drop_002.ogg"></audio>
+    <audio id="sfx-end" data-start="19.75" data-duration="1.48" data-track-index="21" data-volume="0.8" src="assets/sfx/impactBell_heavy_000.ogg"></audio>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      window.__timelines["main"] = tl;
+
+      const up = (sel, at, d = 0.55) =>
+        tl.fromTo(sel, { opacity: 0, y: 34 }, { opacity: 1, y: 0, duration: d, ease: "power3.out" }, at);
+      // corte seco: lampejo curto + o novo plano chega com um empurrão
+      const corte = (at) => tl.fromTo("#flash", { opacity: 0.38 }, { opacity: 0, duration: 0.22, ease: "power2.out", immediateRender: false }, at);
+      const push = (sel, from, to, at, dur, origin = "50% 50%") =>
+        tl.fromTo(sel, { scale: from, transformOrigin: origin }, { scale: to, duration: dur, ease: "none" }, at);
+
+      /* ---------- A · pergunta ---------- */
+      tl.fromTo("#a-mono", { opacity: 0 }, { opacity: 0.7, duration: 0.5 }, 0.15);
+      up("#a-1", 0.35, 0.7);
+      up("#a-2", 1.45, 0.7); // beat-grid: 1.50s
+      tl.to("#sA", { scale: 1.06, duration: 2.8, ease: "none" }, 0.1);
+
+      /* ---------- B · hero ---------- */
+      // beat-locked: 2.88s (strongest cue before the hero)
+      corte(2.88);
+      push("#b-img", 1.1, 1.0, 2.88, 2.3);
+      tl.fromTo("#b-img", { x: 30 }, { x: -30, duration: 2.3, ease: "none" }, 2.88);
+      up("#b-tag", 3.2, 0.4);
+      up("#b-line", 3.33, 0.6); // beat: 3.33s
+
+      /* ---------- C · nuvens ---------- */
+      corte(5.17); // beat-locked: 5.17s
+      push("#c-img", 1.14, 1.0, 5.17, 1.83, "50% 70%");
+      up("#c-tag", 5.5, 0.35);
+      up("#c-line", 5.62, 0.55); // beat: 5.62s
+
+      /* ---------- D · cidades ---------- */
+      corte(7.0);
+      push("#d-img", 1.12, 1.0, 7.0, 1.82, "50% 45%");
+      up("#d-tag", 7.3, 0.35);
+      up("#d-line", 7.46, 0.55); // beat-locked: 7.46s
+
+      /* ---------- E · cidade ---------- */
+      corte(8.82); // beat: 8.82s
+      push("#e-img", 1.0, 1.1, 8.82, 1.38, "30% 40%");
+      up("#e-tag", 9.0, 0.35);
+      up("#e-line", 9.1, 0.5);
+
+      /* ---------- F · mapa ---------- */
+      corte(10.2); // beat-locked: 10.20s
+      tl.fromTo("#f-img", { scale: 1.45, transformOrigin: "52% 50%" }, { scale: 1.12, duration: 2.28, ease: "power2.out" }, 10.2);
+      up("#f-tag", 10.5, 0.35);
+      up("#f-line", 10.64, 0.55); // beat: 10.64s
+      tl.fromTo("#f-pill", { opacity: 0, scale: 0.8, y: -20 }, { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: "back.out(1.6)" }, 11.12); // beat: 11.12s
+
+      /* ---------- G · lista ---------- */
+      corte(12.48); // beat: 12.48s
+      push("#g-img", 1.0, 1.1, 12.48, 1.39, "50% 30%");
+      up("#g-tag", 12.7, 0.3);
+      up("#g-line", 12.8, 0.5);
+
+      /* ---------- H · fotos ---------- */
+      corte(13.87); // beat-locked: 13.87s (strongest beat of the clip)
+      tl.fromTo("#h-img", { scale: 1.9, transformOrigin: "50% 60%" }, { scale: 1.5, duration: 2.29, ease: "power2.out" }, 13.87);
+      up("#h-tag", 14.2, 0.35);
+      up("#h-line", 14.31, 0.6); // beat: 14.31s
+
+      /* ---------- I · números ---------- */
+      corte(16.16); // beat: 16.16s
+      tl.fromTo("#i-n1", { x: -80 }, { x: 80, duration: 3.64, ease: "none" }, 16.16);
+      tl.fromTo("#i-n2", { x: 80 }, { x: -80, duration: 3.64, ease: "none" }, 16.16);
+      // beat-grid: row 1 at 16.16s, row 2 at 17.07s, row 3 at 17.98s
+      tl.fromTo("#i-r1", { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.6, ease: "power4.out" }, 16.16);
+      tl.fromTo("#i-r2", { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.6, ease: "power4.out" }, 17.07);
+      tl.fromTo("#i-r3", { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.6, ease: "power4.out" }, 17.98);
+
+      /* ---------- J · encerramento ---------- */
+      corte(19.8); // beat: 19.80s
+      tl.fromTo("#j-mark", { opacity: 0, scale: 0.86, y: 20 }, { opacity: 1, scale: 1, y: 0, duration: 0.7, ease: "power4.out" }, 19.82);
+      tl.fromTo("#j-sub", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 20.35);
+      tl.to("#root", { opacity: 0, duration: 0.55, ease: "power1.in" }, 21.45);
+
+      /* ---------- música → brilho e vinheta (sutil; sem waveform) ---------- */
+      const rms = window.__RMS || [];
+      const pulso = { t: 0 };
+      tl.to(pulso, {
+        t: 1,
+        duration: 22,
+        ease: "none",
+        onUpdate() {
+          const i = Math.max(0, Math.min(rms.length - 1, Math.round(tl.time() * 30)));
+          const e = rms[i] || 0;
+          gsap.set("#glow", { opacity: 0.12 + e * 0.5, scale: 1 + e * 0.07 });
+          gsap.set("#vig", { opacity: 0.62 - e * 0.28 });
+        },
+      }, 0);
+
+      tl.seek(0);
+    </script>
+  </body>
+</html>
