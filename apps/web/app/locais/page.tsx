@@ -1,12 +1,16 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { PlaceListItem, CategoryResponse } from '@guia/contracts';
 import { ApiClient } from '../../lib/api-client';
 import { CityAutocomplete } from '../../components/city-autocomplete';
 import {
+  List,
+  Map as MapIcon,
+  LocateFixed,
   Search,
   MapPin,
   Star,
@@ -17,6 +21,11 @@ import {
 } from 'lucide-react';
 import { CidadeArte, slugCidade } from '../../components/cidade-arte';
 
+const MapaLocais = dynamic(() => import('../../components/mapa-locais'), {
+  ssr: false,
+  loading: () => <div className="mapa-locais animate-pulse" />,
+});
+
 function LocaisContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -24,6 +33,9 @@ function LocaisContent() {
   const [places, setPlaces] = useState<PlaceListItem[]>([]);
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [view, setView] = useState<'lista' | 'mapa'>('lista');
+  const [near, setNear] = useState<{ lat: number; lng: number } | null>(null);
+  const [geoStatus, setGeoStatus] = useState<'idle' | 'buscando' | 'negado'>('idle');
 
   const [search, setSearch] = useState(searchParams.get('busca') || '');
   const [city, setCity] = useState(searchParams.get('cidade') || '');
@@ -46,6 +58,8 @@ function LocaisContent() {
         categorySlug: selectedCategory || undefined,
         search: search.trim() || undefined,
         minRating: minRating,
+        limit: 50,
+        ...(near ? { lat: near.lat, lng: near.lng, radiusKm: 25 } : {}),
       });
       setPlaces(data);
     } catch (err) {
@@ -58,7 +72,28 @@ function LocaisContent() {
 
   useEffect(() => {
     fetchPlaces();
-  }, [selectedCategory, minRating]);
+  }, [selectedCategory, minRating, near]);
+
+  const buscarPertoDeMim = () => {
+    if (near) {
+      setNear(null);
+      return;
+    }
+    if (!navigator.geolocation) {
+      setGeoStatus('negado');
+      return;
+    }
+    setGeoStatus('buscando');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setCity('');
+        setNear({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setGeoStatus('idle');
+      },
+      () => setGeoStatus('negado'),
+      { enableHighAccuracy: false, timeout: 10000 }
+    );
+  };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,8 +186,20 @@ function LocaisContent() {
               type="submit"
               className="w-full bg-[#faf6ee] hover:bg-white text-[#0b0a17] font-extrabold text-xs sm:text-sm py-3 px-5 rounded-2xl transition shadow-[0_0_20px_rgba(242,166,90,0.35)] flex items-center justify-center gap-2"
             >
-              <Search className="w-4 h-4" />
-              Filtrar Locais
+              <Search className="w-4 h-4 flex-shrink-0" />
+              <span className="whitespace-nowrap">Filtrar Locais</span>
+            </button>
+            <button
+              type="button"
+              onClick={buscarPertoDeMim}
+              aria-pressed={Boolean(near)}
+              title="Mostrar só lugares num raio de 25 km"
+              className={`flex-shrink-0 px-4 rounded-2xl border text-xs font-bold flex items-center gap-2 transition ${
+                near ? 'bg-[#f2a65a] text-[#0b0a17] border-[#f2a65a]' : 'border-white/[0.15] text-slate-200 hover:bg-white/[0.08]'
+              }`}
+            >
+              <LocateFixed className={`w-4 h-4 ${geoStatus === 'buscando' ? 'animate-pulse' : ''}`} />
+              <span className="hidden sm:inline">{geoStatus === 'buscando' ? 'Localizando...' : 'Perto de mim'}</span>
             </button>
           </div>
         </form>
@@ -223,12 +270,36 @@ function LocaisContent() {
             </span>
           )}
         </h2>
-        {selectedCategory && (
-          <span className="text-xs bg-purple-500/15 border border-purple-500/30 text-purple-300 px-3 py-1 rounded-full font-bold">
-            {categories.find((c) => c.slug === selectedCategory)?.name || selectedCategory}
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          {selectedCategory && (
+            <span className="hidden sm:inline text-xs bg-purple-500/15 border border-purple-500/30 text-purple-300 px-3 py-1 rounded-full font-bold">
+              {categories.find((c) => c.slug === selectedCategory)?.name || selectedCategory}
+            </span>
+          )}
+          <div className="inline-flex p-1 rounded-full bg-white/[0.06] border border-white/[0.1]" role="group" aria-label="Modo de visualização">
+            {(['lista', 'mapa'] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setView(v)}
+                aria-pressed={view === v}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition ${
+                  view === v ? 'bg-[#faf6ee] text-[#0b0a17]' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                {v === 'lista' ? <List className="w-3.5 h-3.5" /> : <MapIcon className="w-3.5 h-3.5" />}
+                {v === 'lista' ? 'Lista' : 'Mapa'}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
+
+      {geoStatus === 'negado' && (
+        <p className="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-2xl px-4 py-3">
+          Não consegui acessar sua localização. Libere a permissão do navegador ou escolha uma cidade.
+        </p>
+      )}
 
       {/* Places Cards Grid Dark Luxury */}
       {loading ? (
@@ -263,6 +334,8 @@ function LocaisContent() {
             Ver Todos os Locais
           </button>
         </div>
+      ) : view === 'mapa' ? (
+        <MapaLocais places={places} centro={near ?? undefined} />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {places.map((place) => (

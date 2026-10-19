@@ -161,7 +161,7 @@ const CENAS: Record<string, Cena> = {
   },
 };
 
-export function CidadeArte({ slug }: { slug: string }) {
+export function CidadeArte({ slug, alinha = 'xMidYMax' }: { slug: string; alinha?: string }) {
   const cena = CENAS[slug] ?? CENAS.gramado;
   const [c0, c1, c2] = cena.ceu;
   const id = `ca-${slug}`;
@@ -169,7 +169,7 @@ export function CidadeArte({ slug }: { slug: string }) {
     <svg
       className="absolute inset-0 w-full h-full"
       viewBox="0 0 400 300"
-      preserveAspectRatio="xMidYMax slice"
+      preserveAspectRatio={`${alinha} slice`}
       aria-hidden="true"
     >
       <defs>

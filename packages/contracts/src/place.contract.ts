@@ -83,6 +83,8 @@ export const PlaceListItemSchema = z.object({
   coverPhotoUrl: z.string().nullable(),
   averageRating: z.number(),
   totalReviews: z.number(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
   distanceKm: z.number().optional(),
 });
 

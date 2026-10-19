@@ -3,6 +3,8 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import jwt from '@fastify/jwt';
+import multipart from '@fastify/multipart';
+import fastifyStatic from '@fastify/static';
 
 import { env } from './shared/env.js';
 import { errorHandler } from './shared/middlewares/error.handler.js';
@@ -11,6 +13,8 @@ import { authRoutes } from './modules/auth/auth.routes.js';
 import { categoriesRoutes } from './modules/categories/categories.routes.js';
 import { placesRoutes } from './modules/places/places.routes.js';
 import { reviewsRoutes } from './modules/reviews/reviews.routes.js';
+import { photosRoutes } from './modules/photos/photos.routes.js';
+import { UPLOADS_DIR } from './modules/photos/photos.service.js';
 
 export function buildApp() {
   const app = fastify({
@@ -48,6 +52,15 @@ export function buildApp() {
     secret: env.JWT_SECRET,
   });
 
+  // 4b. Upload de fotos (1 arquivo por vez, até 5 MB) e arquivos estáticos
+  app.register(multipart, { limits: { fileSize: 5 * 1024 * 1024, files: 1, fields: 4 } });
+  app.register(fastifyStatic, {
+    root: UPLOADS_DIR,
+    prefix: '/uploads/',
+    // o site (outra porta) precisa poder carregar as imagens
+    setHeaders: (reply) => void reply.header('Cross-Origin-Resource-Policy', 'cross-origin'),
+  });
+
   // 5. Handler Centralizado de Erros (Prevenção de Data Exposure)
   app.setErrorHandler(errorHandler);
 
@@ -60,6 +73,7 @@ export function buildApp() {
   app.register(authRoutes, { prefix: '/api/v1/auth' });
   app.register(categoriesRoutes, { prefix: '/api/v1/categories' });
   app.register(placesRoutes, { prefix: '/api/v1/places' });
+  app.register(photosRoutes, { prefix: '/api/v1/places' });
   app.register(reviewsRoutes, { prefix: '/api/v1/reviews' });
 
   return app;

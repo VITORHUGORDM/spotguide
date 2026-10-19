@@ -9,6 +9,7 @@ import { DivisorNuvem } from '../components/hero/divisor-nuvem';
 import { CidadeArte, slugCidade } from '../components/cidade-arte';
 import '../components/hero/secoes.css';
 import { carregaStats, type GuiaStats } from '../lib/guia-stats';
+import { CIDADES } from '../lib/cidades';
 import { ApiClient } from '../lib/api-client';
 import {
   Search,
@@ -79,50 +80,6 @@ const CATEGORIES = [
   },
 ];
 
-const POPULAR_CITIES = [
-  {
-    name: 'Gramado',
-    state: 'RS',
-    subtitle: 'Serra Gaúcha • Alta Gastronomia & Charme',
-    image: 'https://images.unsplash.com/photo-1596484552834-6a58f850e0a1?auto=format&fit=crop&w=800&q=80',
-    tag: 'Mais Procurado',
-  },
-  {
-    name: 'Campos do Jordão',
-    state: 'SP',
-    subtitle: 'Clima Europeu • Vinhos & Fondue',
-    image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80',
-    tag: 'Inverno & Luxo',
-  },
-  {
-    name: 'Florianópolis',
-    state: 'SC',
-    subtitle: 'Ilha da Magia • Praias & Frutos do Mar',
-    image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80',
-    tag: 'Litoral & Agito',
-  },
-  {
-    name: 'Rio de Janeiro',
-    state: 'RJ',
-    subtitle: 'Cidade Maravilhosa • Cultura & Paisagens',
-    image: 'https://images.unsplash.com/photo-1483729558449-99ef09a8c325?auto=format&fit=crop&w=800&q=80',
-    tag: 'Cartão Postal',
-  },
-  {
-    name: 'Porto Alegre',
-    state: 'RS',
-    subtitle: 'Orla do Guaíba • Gastronomia & Parques',
-    image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80',
-    tag: 'Capital Sulista',
-  },
-  {
-    name: 'Curitiba',
-    state: 'PR',
-    subtitle: 'Cidade Modelo • Parques & Alta Gastronomia',
-    image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80',
-    tag: 'Inovação & Café',
-  },
-];
 
 export default function HomePage() {
   const router = useRouter();
@@ -263,14 +220,14 @@ export default function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 lg:auto-rows-[15rem] gap-4">
-          {POPULAR_CITIES.map((city, i) => (
+          {CIDADES.map((city, i) => (
             <Link
-              key={city.name}
-              href={`/locais?cidade=${encodeURIComponent(city.name)}`}
+              key={city.nome}
+              href={`/cidades/${city.slug}`}
               className={`cidade-card group ${i === 0 ? 'lg:col-span-2 lg:row-span-2 min-h-[22rem]' : 'min-h-[15rem]'}`}
             >
               <div className="absolute inset-0 group-hover:scale-105 transition-transform duration-700 ease-out">
-                <CidadeArte slug={slugCidade(city.name)} />
+                <CidadeArte slug={city.slug} />
               </div>
               <div className="cidade-card__veu" />
               <div className="relative z-10 h-full flex flex-col justify-between p-5 sm:p-6">
@@ -278,18 +235,18 @@ export default function HomePage() {
                   <span className="hero-mono text-[11px] text-[#faf6ee] bg-[#0b0a17]/55 backdrop-blur-md px-3 py-1 rounded-full border border-white/15">
                     {city.tag}
                   </span>
-                  {porCidade[city.name] > 0 && (
+                  {porCidade[city.nome] > 0 && (
                     <span className="hero-mono text-[11px] text-[#0b0a17] bg-[#faf6ee] px-3 py-1 rounded-full">
-                      {porCidade[city.name]} {porCidade[city.name] === 1 ? 'lugar' : 'lugares'}
+                      {porCidade[city.nome]} {porCidade[city.nome] === 1 ? 'lugar' : 'lugares'}
                     </span>
                   )}
                 </div>
                 <div className="space-y-1">
                   <h3 className={`hero-titulo text-[#faf6ee] leading-none ${i === 0 ? 'text-4xl sm:text-5xl' : 'text-2xl'}`}>
-                    {city.name}
-                    <span className="hero-mono text-xs text-[#f2a65a] ml-2 align-middle">{city.state}</span>
+                    {city.nome}
+                    <span className="hero-mono text-xs text-[#f2a65a] ml-2 align-middle">{city.uf}</span>
                   </h3>
-                  <p className="text-xs sm:text-sm text-[#faf6ee]/75">{city.subtitle}</p>
+                  <p className="text-xs sm:text-sm text-[#faf6ee]/75">{city.subtitulo}</p>
                 </div>
               </div>
             </Link>

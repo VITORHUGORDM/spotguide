@@ -71,6 +71,8 @@ export class PlacesRepository {
         coverPhotoUrl: p.coverPhotoUrl ?? null,
         averageRating: Number(p.averageRating),
         totalReviews: Number(p.totalReviews),
+        latitude: Number(p.latitude),
+        longitude: Number(p.longitude),
         distanceKm: Number(Number(p.distanceKm).toFixed(1)),
       }));
     }
@@ -119,6 +121,8 @@ export class PlacesRepository {
       coverPhotoUrl: p.photos[0]?.url ?? null,
       averageRating: Number(p.averageRating),
       totalReviews: p.totalReviews,
+      latitude: p.latitude,
+      longitude: p.longitude,
     }));
   }
 

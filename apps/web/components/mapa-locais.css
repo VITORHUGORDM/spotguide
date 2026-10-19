@@ -1,0 +1,78 @@
+.mapa-locais {
+  height: min(68svh, 640px);
+  min-height: 380px;
+  border-radius: 28px;
+  overflow: hidden;
+  border: 1px solid rgba(250, 246, 238, 0.12);
+  background: #12102a;
+}
+.mapa-locais .leaflet-container {
+  background: #12102a;
+  font-family: 'Archivo Variable', 'Archivo', system-ui, sans-serif;
+}
+/* tiles claros do OpenStreetMap viram um mapa noturno */
+.mapa-locais .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(200deg) brightness(0.85) saturate(0.55) contrast(0.95);
+}
+.mapa-pin {
+  background: none;
+  border: 0;
+  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.45));
+  transition: transform 0.2s ease;
+}
+.mapa-pin:hover {
+  transform: translateY(-4px) scale(1.08);
+}
+.mapa-locais .leaflet-popup-content-wrapper {
+  background: #faf6ee;
+  color: #0b0a17;
+  border-radius: 18px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+}
+.mapa-locais .leaflet-popup-tip {
+  background: #faf6ee;
+}
+.mapa-locais .leaflet-popup-content {
+  margin: 14px 16px;
+}
+.mapa-popup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 170px;
+}
+.mapa-popup strong {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.mapa-popup__cat {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 11px;
+  color: #b94452;
+}
+.mapa-popup__linha {
+  font-size: 12px;
+  color: #3b4a60;
+}
+.mapa-popup a {
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0b0a17;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.mapa-locais .leaflet-control-attribution {
+  background: rgba(11, 10, 23, 0.7);
+  color: #b6b0c8;
+  font-size: 10px;
+}
+.mapa-locais .leaflet-control-attribution a {
+  color: #f2a65a;
+}
+.mapa-locais .leaflet-bar a {
+  background: #faf6ee;
+  color: #0b0a17;
+  border-color: rgba(11, 10, 23, 0.15);
+}

@@ -133,7 +133,7 @@ export default function NovoLocalPage() {
         token
       );
 
-      router.push(`/locais/${created.slug}`);
+      router.push(`/comerciante/locais/${created.id}/editar?novo=1`);
     } catch (err: any) {
       setError(err.message || 'Erro ao cadastrar local. Verifique os dados.');
     } finally {

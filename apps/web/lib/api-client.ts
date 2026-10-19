@@ -40,6 +40,7 @@ export class ApiClient {
     lat?: number;
     lng?: number;
     radiusKm?: number;
+    limit?: number;
   }): Promise<PlaceListItem[]> {
     const query = new URLSearchParams();
     if (params.city) query.set('city', params.city);
@@ -49,6 +50,7 @@ export class ApiClient {
     if (params.lat) query.set('lat', String(params.lat));
     if (params.lng) query.set('lng', String(params.lng));
     if (params.radiusKm) query.set('radiusKm', String(params.radiusKm));
+    if (params.limit) query.set('limit', String(params.limit));
 
     const res = await fetch(`${API_BASE_URL}/places?${query.toString()}`, {
       cache: 'no-store',
@@ -200,6 +202,41 @@ export class ApiClient {
       throw new Error(err.message || 'Erro ao atualizar estabelecimento');
     }
     return res.json();
+  }
+
+  static async uploadPhoto(
+    placeId: string,
+    arquivo: File,
+    token: string
+  ): Promise<{ id: string; url: string; caption: string | null; isCover: boolean }> {
+    const form = new FormData();
+    form.append('file', arquivo);
+    const res = await fetch(`${API_BASE_URL}/places/${placeId}/photos`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` }, // sem Content-Type: o navegador define o boundary
+      body: form,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || err.error || 'Erro ao enviar a foto');
+    }
+    return res.json();
+  }
+
+  static async deletePhoto(placeId: string, photoId: string, token: string): Promise<void> {
+    const res = await fetch(`${API_BASE_URL}/places/${placeId}/photos/${photoId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Erro ao remover a foto');
+  }
+
+  static async setCoverPhoto(placeId: string, photoId: string, token: string): Promise<void> {
+    const res = await fetch(`${API_BASE_URL}/places/${placeId}/photos/${photoId}/cover`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Erro ao trocar a capa');
   }
 
   static async deletePlace(id: string, token: string): Promise<void> {

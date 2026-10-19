@@ -34,6 +34,10 @@ export function errorHandler(error: FastifyError, request: FastifyRequest, reply
     });
   }
 
+  if ((error as any).code === 'FST_REQ_FILE_TOO_LARGE') {
+    return reply.status(413).send({ statusCode: 413, error: 'Payload Too Large', message: 'A imagem passa de 5 MB.' });
+  }
+
   // 4. ID malformado (P2023) ou registro inexistente (P2025) vindos do Prisma
   if ((error as any).code === 'P2023') {
     return reply.status(400).send({ statusCode: 400, error: 'Bad Request', message: 'Identificador inválido.' });

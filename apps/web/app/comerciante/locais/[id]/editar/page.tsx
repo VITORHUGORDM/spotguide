@@ -7,6 +7,7 @@ import { useAuth } from '../../../../../lib/auth-context';
 import { ApiClient } from '../../../../../lib/api-client';
 import { CityAutocomplete } from '../../../../../components/city-autocomplete';
 import { ArrowLeft, Building2, MapPin, CheckCircle, AlertCircle } from 'lucide-react';
+import { PhotoManager, type FotoLocal } from '../../../../../components/photo-manager';
 
 export default function EditarLocalPage() {
   const router = useRouter();
@@ -33,6 +34,7 @@ export default function EditarLocalPage() {
   const [latitude, setLatitude] = useState<number>(0);
   const [longitude, setLongitude] = useState<number>(0);
   const [slug, setSlug] = useState('');
+  const [fotos, setFotos] = useState<FotoLocal[]>([]);
 
   useEffect(() => {
     if (!id) return;
@@ -51,6 +53,7 @@ export default function EditarLocalPage() {
         setLatitude(place.latitude);
         setLongitude(place.longitude);
         setSlug(place.slug);
+        setFotos(place.photos ?? []);
       })
       .catch((err) => setError('Falha ao carregar dados do local.'))
       .finally(() => setLoadingPlace(false));
@@ -300,6 +303,12 @@ export default function EditarLocalPage() {
           </button>
         </div>
       </form>
+
+      {token && !loadingPlace && (
+        <div className="mt-8">
+          <PhotoManager placeId={id} token={token} fotosIniciais={fotos} />
+        </div>
+      )}
     </div>
   );
 }

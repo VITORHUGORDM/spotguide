@@ -27,3 +27,6 @@ pnpm-debug.log*
 .DS_Store
 Thumbs.db
 *.tsbuildinfo
+
+# Fotos enviadas por comerciantes (em produção use S3/Cloudinary)
+apps/api/uploads/

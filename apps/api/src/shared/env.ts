@@ -14,6 +14,7 @@ const envSchema = z.object({
   REFRESH_TOKEN_EXPIRES_IN: z.string().default('7d'),
   RATE_LIMIT_MAX: z.coerce.number().default(100),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
+  PUBLIC_URL: z.string().url().default('http://localhost:3333'),
   ALLOWED_ORIGINS: z.string().default('http://localhost:3000,http://localhost:8081'),
 });
 

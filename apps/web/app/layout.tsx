@@ -7,8 +7,10 @@ import { AuthProvider } from '../lib/auth-context';
 import { SiteNav } from '../components/site-nav';
 import { SiteFooter } from '../components/site-footer';
 import { Grain } from '../components/grain';
+import { SITE_URL } from '../lib/cidades';
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
     default: 'SpotGuide • Guia turístico e comercial',
     template: '%s | SpotGuide',

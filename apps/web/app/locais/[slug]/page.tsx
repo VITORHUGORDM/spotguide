@@ -1,6 +1,8 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ApiClient } from '../../../lib/api-client';
+import { SITE_URL } from '../../../lib/cidades';
 import { PlaceReviews } from '../../../components/place-reviews';
 import {
   MapPin,
@@ -25,6 +27,30 @@ const DAY_LABELS: Record<string, string> = {
   SATURDAY: 'Sábado',
 };
 
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  try {
+    const p = await ApiClient.getPlaceBySlug(slug);
+    const titulo = `${p.name} em ${p.city}`;
+    const descricao = p.description.length > 155 ? `${p.description.slice(0, 152)}...` : p.description;
+    return {
+      title: titulo,
+      description: descricao,
+      alternates: { canonical: `${SITE_URL}/locais/${p.slug}` },
+      openGraph: {
+        title: `${titulo} | SpotGuide`,
+        description: descricao,
+        url: `${SITE_URL}/locais/${p.slug}`,
+        type: 'website',
+        locale: 'pt_BR',
+        ...(p.photos?.[0]?.url ? { images: [p.photos[0].url] } : {}),
+      },
+    };
+  } catch {
+    return { title: 'Local não encontrado' };
+  }
+}
+
 export default async function PlaceDetailPage({
   params,
 }: {
@@ -42,10 +68,43 @@ export default async function PlaceDetailPage({
     notFound();
   }
 
+  // a API devolve só a lista de fotos: a capa é a marcada como capa (ou a primeira)
+  const capa = place.photos?.find((f) => f.isCover) ?? place.photos?.[0];
+  const outrasFotos = (place.photos ?? []).filter((f) => f.id !== capa?.id);
+
   const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${place.latitude},${place.longitude}`;
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: place.name,
+    description: place.description,
+    url: `${SITE_URL}/locais/${place.slug}`,
+    telephone: place.phone || undefined,
+    image: place.photos?.map((f) => f.url),
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: `${place.street}, ${place.number}`,
+      addressLocality: place.city,
+      addressRegion: place.state,
+      postalCode: place.postalCode,
+      addressCountry: 'BR',
+    },
+    geo: { '@type': 'GeoCoordinates', latitude: place.latitude, longitude: place.longitude },
+    ...(Number(place.totalReviews) > 0 && Number(place.averageRating) > 0
+      ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: Number(place.averageRating),
+            reviewCount: Number(place.totalReviews),
+          },
+        }
+      : {}),
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-8 bg-[#0b0a17] text-slate-100">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
       {/* Top Navigation / Breadcrumb */}
       <div className="flex items-center gap-2 text-xs text-slate-400">
         <Link
@@ -143,9 +202,9 @@ export default async function PlaceDetailPage({
         {/* Photo Gallery Banner */}
         <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-4 rounded-2xl overflow-hidden max-h-[440px] border border-white/[0.08]">
           <div className="md:col-span-2 h-72 sm:h-96 bg-[#0e0e1a] relative group overflow-hidden">
-            {place.coverPhotoUrl ? (
+            {capa ? (
               <img
-                src={place.coverPhotoUrl}
+                src={capa.url}
                 alt={place.name}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               />
@@ -158,8 +217,8 @@ export default async function PlaceDetailPage({
           </div>
 
           <div className="hidden md:flex flex-col gap-4">
-            {place.photos && place.photos.length > 1 ? (
-              place.photos.slice(1, 3).map((photo) => (
+            {outrasFotos.length > 0 ? (
+              outrasFotos.slice(0, 2).map((photo) => (
                 <div
                   key={photo.id}
                   className="h-[184px] bg-[#0e0e1a] rounded-xl overflow-hidden relative group"
@@ -173,7 +232,7 @@ export default async function PlaceDetailPage({
               ))
             ) : (
               <div className="h-full bg-white/[0.02] border border-dashed border-white/[0.1] rounded-xl flex items-center justify-center text-xs text-slate-500 p-6 text-center">
-                Galeria completa com fotos dos visitantes em breve.
+                Este local ainda não tem outras fotos.
               </div>
             )}
           </div>
