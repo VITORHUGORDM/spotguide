@@ -22,6 +22,7 @@ import {
   User,
   AlertCircle,
 } from 'lucide-react';
+import { CidadeArte, slugCidade } from '../../components/cidade-arte';
 
 export default function ComerciantePortalPage() {
   const { user, token, login, register, logout, isLoading } = useAuth();
@@ -104,10 +105,9 @@ export default function ComerciantePortalPage() {
   // Se o usuário já está logado como COMERCIANTE (ou ADMIN)
   if (user && (user.role === 'MERCHANT' || user.role === 'ADMIN')) {
     const totalReviews = places.reduce((acc, p) => acc + (p.totalReviews || 0), 0);
-    const avgRating =
-      places.length > 0
-        ? (places.reduce((acc, p) => acc + (p.averageRating || 0), 0) / places.length).toFixed(1)
-        : '0.0';
+    // média ponderada pelas avaliações: locais ainda sem avaliação não puxam a nota para baixo
+    const somaNotas = places.reduce((acc, p) => acc + (Number(p.averageRating) || 0) * (p.totalReviews || 0), 0);
+    const avgRating = totalReviews > 0 ? (somaNotas / totalReviews).toFixed(1) : '—';
 
     return (
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-8 bg-[#0b0a17] text-slate-100">
@@ -219,8 +219,8 @@ export default function ComerciantePortalPage() {
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-3xl bg-[#0e0e1a] text-slate-600">
-                          🏢
+                        <div className="relative w-full h-full">
+                          <CidadeArte slug={slugCidade(place.city)} />
                         </div>
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a14] via-transparent to-transparent opacity-60" />
