@@ -93,7 +93,7 @@ export default function EditarLocalPage() {
 
   if (isLoading || loadingPlace) {
     return (
-      <div className="min-h-[50vh] flex items-center justify-center text-xs text-slate-500 bg-[#030305]">
+      <div className="min-h-[50vh] flex items-center justify-center text-xs text-slate-500 bg-[#0b0a17]">
         <div className="flex items-center gap-3">
           <div className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
           <span>Carregando dados do estabelecimento...</span>
@@ -103,7 +103,7 @@ export default function EditarLocalPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-8 bg-[#030305] text-slate-100">
+    <div className="max-w-4xl mx-auto px-4 py-8 space-y-8 bg-[#0b0a17] text-slate-100">
       <div className="space-y-2">
         <Link
           href="/comerciante"
@@ -293,7 +293,7 @@ export default function EditarLocalPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="px-8 py-3.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 disabled:opacity-50 text-white font-bold text-xs rounded-2xl transition shadow-[0_0_25px_rgba(168,85,247,0.4)] flex items-center gap-2"
+            className="px-8 py-3.5 bg-[#faf6ee] hover:bg-white disabled:opacity-50 text-[#0b0a17] font-bold text-xs rounded-2xl transition shadow-[0_0_25px_rgba(242,166,90,0.4)] flex items-center gap-2"
           >
             <CheckCircle className="w-4 h-4" />
             {submitting ? 'Salvando...' : 'Salvar Alterações'}

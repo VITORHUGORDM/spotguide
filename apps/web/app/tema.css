@@ -1,0 +1,87 @@
+/* Atmosfera do tema "pôr do sol" para todas as páginas */
+body {
+  background-image:
+    radial-gradient(900px 460px at 88% -140px, rgba(217, 105, 122, 0.2), transparent 70%),
+    radial-gradient(800px 420px at 8% -120px, rgba(59, 42, 120, 0.5), transparent 70%);
+  background-repeat: no-repeat;
+}
+
+.site-footer {
+  position: relative;
+  background: #07060f;
+  overflow: hidden;
+}
+.site-footer__faixa {
+  height: 3px;
+  background: linear-gradient(90deg, #3b2a78, #d9697a, #f2a65a, #fbd9a8);
+}
+
+/* botão pílula */
+.botao-pilula {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 7px 7px 7px 24px;
+  border-radius: 999px;
+  background: #faf6ee;
+  color: #0b0a17;
+  font-variation-settings: 'wdth' 106;
+  font-weight: 560;
+  font-size: 16px;
+  line-height: 1;
+  box-shadow: 0 8px 30px rgba(22, 16, 44, 0.35);
+  transition: transform 0.25s ease;
+}
+.botao-pilula:hover {
+  transform: translateY(-2px);
+}
+.botao-pilula__circulo {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #0b0a17;
+  color: #faf6ee;
+  flex-shrink: 0;
+}
+.botao-pilula__circulo svg {
+  width: 17px;
+  height: 17px;
+  transition: transform 0.3s ease;
+}
+.botao-pilula:hover .botao-pilula__circulo svg {
+  transform: rotate(-45deg);
+}
+
+/* ---------- grão ---------- */
+.hero-grao {
+  position: fixed;
+  inset: -180px;
+  z-index: 100;
+  pointer-events: none;
+  background-size: 180px 180px;
+  mix-blend-mode: soft-light;
+  opacity: 0.3;
+  animation: grao 1s steps(10) infinite;
+}
+@keyframes grao {
+  0% { transform: translate(0, 0); }
+  10% { transform: translate(-37px, 22px); }
+  20% { transform: translate(53px, -41px); }
+  30% { transform: translate(-71px, -14px); }
+  40% { transform: translate(24px, 63px); }
+  50% { transform: translate(-48px, 49px); }
+  60% { transform: translate(66px, 17px); }
+  70% { transform: translate(-19px, -58px); }
+  80% { transform: translate(41px, -27px); }
+  90% { transform: translate(-62px, 35px); }
+  100% { transform: translate(0, 0); }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-grao {
+    animation: none;
+  }
+}

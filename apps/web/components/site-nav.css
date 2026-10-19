@@ -1,0 +1,101 @@
+/* ---------- nav ---------- */
+.site-nav-wrap {
+  position: fixed;
+  z-index: 60;
+  top: 14px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.site-nav-wrap[data-oculta='true'] {
+  transform: translateY(-160%);
+}
+.site-nav {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 18px;
+  background: rgba(11, 11, 20, 0.45);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  font-family: 'Archivo Variable', 'Archivo', system-ui, sans-serif;
+  font-variation-settings: 'wdth' 106;
+  font-size: 14px;
+  color: #faf6ee;
+}
+.site-nav a,
+.site-nav button {
+  padding: 9px 16px;
+  border-radius: 12px;
+  white-space: nowrap;
+  color: inherit;
+  transition: background 0.2s ease;
+}
+.site-nav a:hover,
+.site-nav button:hover {
+  background: rgba(250, 246, 238, 0.14);
+}
+.site-nav a:focus-visible,
+.site-nav button:focus-visible {
+  outline: 2px solid #faf6ee;
+  outline-offset: -2px;
+}
+
+
+.site-nav__marca {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px 7px 10px !important;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.site-nav__marca svg {
+  height: 17px;
+  width: auto;
+  color: #f2a65a;
+}
+.site-nav a[aria-current='page'] {
+  background: rgba(250, 246, 238, 0.16);
+}
+.site-nav-espaco {
+  height: 84px;
+}
+.site-nav-wrap[data-home='true'] .site-nav {
+  animation: nav-entra 0.9s 2.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes nav-entra {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: none; }
+}
+@media (max-width: 760px) {
+  .site-nav-wrap {
+    padding: 0 16px;
+  }
+  .site-nav {
+    flex: 1;
+    justify-content: space-between;
+    gap: 0;
+    font-size: 13px;
+  }
+  .site-nav a,
+  .site-nav button {
+    padding: 9px 8px;
+  }
+  .site-nav__marca span {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-nav-wrap {
+    transition: none;
+  }
+  .site-nav-wrap[data-home='true'] .site-nav {
+    animation: none;
+  }
+}

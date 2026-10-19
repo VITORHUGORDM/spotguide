@@ -155,7 +155,7 @@ export function PlaceReviews({ placeId, initialReviews, isOwner }: PlaceReviewsP
             <button
               type="submit"
               disabled={submitting}
-              className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 disabled:opacity-50 text-white font-bold text-xs px-6 py-3 rounded-2xl transition shadow-[0_0_20px_rgba(168,85,247,0.35)] flex items-center gap-2"
+              className="bg-[#faf6ee] hover:bg-white disabled:opacity-50 text-[#0b0a17] font-bold text-xs px-6 py-3 rounded-2xl transition shadow-[0_0_20px_rgba(242,166,90,0.35)] flex items-center gap-2"
             >
               <Send className="w-3.5 h-3.5" />
               {submitting ? 'Enviando...' : 'Publicar Avaliação'}
@@ -168,7 +168,7 @@ export function PlaceReviews({ placeId, initialReviews, isOwner }: PlaceReviewsP
             </p>
             <Link
               href="/login"
-              className="inline-block px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-bold rounded-xl hover:from-purple-500 hover:to-indigo-500 shadow-[0_0_20px_rgba(168,85,247,0.3)] transition"
+              className="inline-block px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-bold rounded-xl hover:from-purple-500 hover:to-indigo-500 shadow-[0_0_20px_rgba(242,166,90,0.3)] transition"
             >
               Fazer Login para Avaliar
             </Link>
@@ -190,7 +190,7 @@ export function PlaceReviews({ placeId, initialReviews, isOwner }: PlaceReviewsP
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 text-white font-bold flex items-center justify-center text-sm shadow-[0_0_10px_rgba(168,85,247,0.4)]">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 text-white font-bold flex items-center justify-center text-sm shadow-[0_0_10px_rgba(242,166,90,0.4)]">
                     {r.user.name.charAt(0).toUpperCase()}
                   </div>
                   <div>
@@ -250,7 +250,7 @@ export function PlaceReviews({ placeId, initialReviews, isOwner }: PlaceReviewsP
                         <button
                           onClick={() => handleSendReply(r.id)}
                           disabled={submittingReply}
-                          className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition shadow-[0_0_15px_rgba(168,85,247,0.4)]"
+                          className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition shadow-[0_0_15px_rgba(242,166,90,0.4)]"
                         >
                           {submittingReply ? 'Enviando...' : 'Responder'}
                         </button>

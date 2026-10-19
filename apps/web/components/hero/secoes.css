@@ -1,0 +1,151 @@
+/* Seções da home depois do hero: divisor de nuvem, categorias, cidades e chamada para comerciantes */
+
+.divisor-nuvem {
+  position: relative;
+  height: 16rem;
+  margin-block: -5rem;
+  overflow: hidden;
+  pointer-events: none;
+  -webkit-mask-image: radial-gradient(ellipse 48% 50% at 50% 50%, #000 35%, transparent 100%);
+  mask-image: radial-gradient(ellipse 48% 50% at 50% 50%, #000 35%, transparent 100%);
+}
+.divisor-nuvem--espelha {
+  transform: scaleX(-1);
+}
+.divisor-nuvem img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(80vw, 980px);
+  max-width: none;
+  opacity: 0.32;
+  filter: saturate(0.8) blur(0.6px);
+  animation: divisor-deriva 60s ease-in-out infinite alternate;
+}
+@keyframes divisor-deriva {
+  from {
+    transform: translate(-56%, -50%);
+  }
+  to {
+    transform: translate(-44%, -50%);
+  }
+}
+
+/* ---------- categorias ---------- */
+.categoria-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 2.5rem;
+  min-height: 11.5rem;
+  padding: 1.1rem;
+  border-radius: 28px;
+  border: 1px solid rgba(250, 246, 238, 0.1);
+  background: linear-gradient(160deg, rgba(250, 246, 238, 0.07), rgba(250, 246, 238, 0.015));
+  overflow: hidden;
+  transition:
+    transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1),
+    border-color 0.3s ease;
+}
+.categoria-tile::after {
+  content: '';
+  position: absolute;
+  inset: auto -30% -60% -30%;
+  height: 80%;
+  background: radial-gradient(ellipse at 50% 100%, rgba(242, 166, 90, 0.4), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+.categoria-tile:hover {
+  transform: translateY(-6px);
+  border-color: rgba(242, 166, 90, 0.55);
+}
+.categoria-tile:hover::after {
+  opacity: 1;
+}
+.categoria-tile__icone {
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+  background: rgba(250, 246, 238, 0.09);
+  color: #f2a65a;
+  transition:
+    background 0.3s ease,
+    color 0.3s ease,
+    transform 0.35s ease;
+}
+.categoria-tile:hover .categoria-tile__icone {
+  background: #faf6ee;
+  color: #0b0a17;
+  transform: rotate(-8deg) scale(1.06);
+}
+
+/* ---------- cidades ---------- */
+.cidade-card {
+  position: relative;
+  display: block;
+  border-radius: 28px;
+  overflow: hidden;
+  border: 1px solid rgba(250, 246, 238, 0.1);
+  isolation: isolate;
+}
+.cidade-card__veu {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to top, rgba(11, 10, 23, 0.94), rgba(11, 10, 23, 0.25) 55%, transparent),
+    linear-gradient(160deg, rgba(217, 105, 122, 0.28), transparent 50%);
+  z-index: 1;
+}
+.cidade-card > .relative {
+  z-index: 2;
+}
+
+/* ---------- chamada para comerciantes: céu com nuvens ---------- */
+.cta-ceu {
+  position: relative;
+  overflow: hidden;
+  border-radius: 36px;
+  padding: clamp(2rem, 6vw, 4.5rem);
+  min-height: 24rem;
+  background: linear-gradient(to bottom, #2a2060 0%, #5b3a86 30%, #b85a86 62%, #e98d6e 86%, #f2b078 100%);
+}
+.cta-ceu__nuvem {
+  position: absolute;
+  max-width: none;
+  pointer-events: none;
+  animation: cta-deriva 90s ease-in-out infinite;
+}
+.cta-ceu__nuvem--a {
+  width: 70%;
+  bottom: -6%;
+  right: -10%;
+  opacity: 0.95;
+}
+.cta-ceu__nuvem--b {
+  width: 56%;
+  bottom: -12%;
+  left: -14%;
+  opacity: 0.8;
+  animation-duration: 120s;
+  animation-direction: reverse;
+}
+@keyframes cta-deriva {
+  0%,
+  100% {
+    transform: translateX(-6%);
+  }
+  50% {
+    transform: translateX(6%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .divisor-nuvem img,
+  .cta-ceu__nuvem {
+    animation: none;
+  }
+}

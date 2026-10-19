@@ -44,7 +44,7 @@ export default async function PlaceDetailPage({
   const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${place.latitude},${place.longitude}`;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-8 bg-[#030305] text-slate-100">
+    <div className="max-w-7xl mx-auto px-4 py-8 space-y-8 bg-[#0b0a17] text-slate-100">
       {/* Top Navigation / Breadcrumb */}
       <div className="flex items-center gap-2 text-xs text-slate-400">
         <Link
@@ -109,7 +109,7 @@ export default async function PlaceDetailPage({
               href={googleMapsUrl}
               target="_blank"
               rel="noreferrer"
-              className="px-6 py-3.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-2xl text-xs font-bold transition flex items-center gap-2 shadow-[0_0_25px_rgba(168,85,247,0.4)] hover:shadow-[0_0_35px_rgba(168,85,247,0.6)] hover:scale-[1.02]"
+              className="px-6 py-3.5 bg-[#faf6ee] hover:bg-white text-[#0b0a17] rounded-2xl text-xs font-bold transition flex items-center gap-2 shadow-[0_0_25px_rgba(242,166,90,0.4)] hover:shadow-[0_0_35px_rgba(242,166,90,0.6)] hover:scale-[1.02]"
             >
               <Navigation className="w-4 h-4" />
               Rotas no Google Maps
@@ -263,7 +263,7 @@ export default async function PlaceDetailPage({
           </div>
 
           {/* Quick info card Dark Luxury */}
-          <div className="bg-gradient-to-br from-purple-950/40 via-indigo-950/30 to-[#0a0a14] border border-purple-500/20 rounded-3xl p-6 text-xs text-purple-200/90 space-y-3 shadow-[0_0_30px_rgba(168,85,247,0.1)]">
+          <div className="bg-gradient-to-br from-purple-950/40 via-indigo-950/30 to-[#0a0a14] border border-purple-500/20 rounded-3xl p-6 text-xs text-purple-200/90 space-y-3 shadow-[0_0_30px_rgba(242,166,90,0.1)]">
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-purple-400" />
               <h4 className="font-bold text-sm text-white">Garantia SpotGuide</h4>

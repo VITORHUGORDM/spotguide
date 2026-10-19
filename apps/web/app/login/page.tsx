@@ -35,13 +35,13 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[75vh] flex items-center justify-center px-4 py-16 bg-[#030305] text-slate-100 relative overflow-hidden">
+    <div className="min-h-[75vh] flex items-center justify-center px-4 py-16 bg-[#0b0a17] text-slate-100 relative overflow-hidden">
       {/* Ambient Cosmic Orbs */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-600/15 rounded-full blur-[100px] pointer-events-none -z-0" />
 
       <div className="w-full max-w-md bg-[#0a0a14]/90 border border-white/[0.1] rounded-3xl p-8 sm:p-10 shadow-[0_0_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl ring-1 ring-purple-500/20 space-y-6 relative z-10">
         <div className="text-center space-y-2">
-          <div className="inline-block p-3.5 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-400 mb-2 shadow-[0_0_20px_rgba(168,85,247,0.3)]">
+          <div className="inline-block p-3.5 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-400 mb-2 shadow-[0_0_20px_rgba(242,166,90,0.3)]">
             <LogIn className="w-6 h-6" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
@@ -93,7 +93,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-3.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 disabled:opacity-50 text-white font-bold text-xs rounded-2xl transition shadow-[0_0_25px_rgba(168,85,247,0.4)] mt-2"
+            className="w-full py-3.5 bg-[#faf6ee] hover:bg-white disabled:opacity-50 text-[#0b0a17] font-bold text-xs rounded-2xl transition shadow-[0_0_25px_rgba(242,166,90,0.4)] mt-2"
           >
             {submitting ? 'Entrando...' : 'Entrar na Plataforma'}
           </button>

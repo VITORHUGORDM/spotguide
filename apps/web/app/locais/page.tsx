@@ -82,7 +82,7 @@ function LocaisContent() {
   const hasActiveFilters = Boolean(search || city || selectedCategory || minRating);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-8 bg-[#030305] text-slate-100 min-h-screen">
+    <div className="max-w-7xl mx-auto px-4 py-8 space-y-8 bg-[#0b0a17] text-slate-100 min-h-screen">
       {/* Page Title & Breadcrumb */}
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
@@ -148,7 +148,7 @@ function LocaisContent() {
           <div className="md:col-span-3 flex gap-2">
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-extrabold text-xs sm:text-sm py-3 px-5 rounded-2xl transition shadow-[0_0_20px_rgba(168,85,247,0.35)] flex items-center justify-center gap-2"
+              className="w-full bg-[#faf6ee] hover:bg-white text-[#0b0a17] font-extrabold text-xs sm:text-sm py-3 px-5 rounded-2xl transition shadow-[0_0_20px_rgba(242,166,90,0.35)] flex items-center justify-center gap-2"
             >
               <Search className="w-4 h-4" />
               Filtrar Locais
@@ -168,7 +168,7 @@ function LocaisContent() {
               onClick={() => setSelectedCategory('')}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${
                 selectedCategory === ''
-                  ? 'bg-purple-600 text-white shadow-[0_0_12px_rgba(168,85,247,0.5)]'
+                  ? 'bg-purple-600 text-white shadow-[0_0_12px_rgba(242,166,90,0.5)]'
                   : 'bg-white/[0.04] text-slate-300 hover:bg-white/[0.08] hover:text-white border border-white/[0.05]'
               }`}
             >
@@ -180,7 +180,7 @@ function LocaisContent() {
                 onClick={() => setSelectedCategory(selectedCategory === cat.slug ? '' : cat.slug)}
                 className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${
                   selectedCategory === cat.slug
-                    ? 'bg-purple-600 text-white shadow-[0_0_12px_rgba(168,85,247,0.5)]'
+                    ? 'bg-purple-600 text-white shadow-[0_0_12px_rgba(242,166,90,0.5)]'
                     : 'bg-white/[0.04] text-slate-300 hover:bg-white/[0.08] hover:text-white border border-white/[0.05]'
                 }`}
               >
@@ -246,7 +246,7 @@ function LocaisContent() {
         </div>
       ) : places.length === 0 ? (
         <div className="bg-[#0a0a14] rounded-3xl border border-white/[0.08] p-14 text-center space-y-4 shadow-2xl">
-          <div className="w-16 h-16 rounded-3xl bg-purple-500/15 border border-purple-500/30 text-purple-400 flex items-center justify-center mx-auto text-3xl shadow-[0_0_20px_rgba(168,85,247,0.25)]">
+          <div className="w-16 h-16 rounded-3xl bg-purple-500/15 border border-purple-500/30 text-purple-400 flex items-center justify-center mx-auto text-3xl shadow-[0_0_20px_rgba(242,166,90,0.25)]">
             🧭
           </div>
           <div className="space-y-1">
@@ -257,7 +257,7 @@ function LocaisContent() {
           </div>
           <button
             onClick={handleClearFilters}
-            className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl text-xs font-bold hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] transition"
+            className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl text-xs font-bold hover:shadow-[0_0_20px_rgba(242,166,90,0.4)] transition"
           >
             Ver Todos os Locais
           </button>
@@ -268,7 +268,7 @@ function LocaisContent() {
             <Link
               key={place.id}
               href={`/locais/${place.slug}`}
-              className="group bg-[#0a0a14]/90 rounded-3xl border border-white/[0.08] overflow-hidden shadow-xl hover:border-purple-500/50 hover:shadow-[0_0_35px_rgba(168,85,247,0.2)] hover:-translate-y-2 transition-all duration-300 flex flex-col justify-between"
+              className="group bg-[#0a0a14]/90 rounded-3xl border border-white/[0.08] overflow-hidden shadow-xl hover:border-purple-500/50 hover:shadow-[0_0_35px_rgba(242,166,90,0.2)] hover:-translate-y-2 transition-all duration-300 flex flex-col justify-between"
             >
               <div>
                 {/* Cover Image */}

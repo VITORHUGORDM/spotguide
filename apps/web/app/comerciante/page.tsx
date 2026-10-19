@@ -92,7 +92,7 @@ export default function ComerciantePortalPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center text-slate-500 text-sm bg-[#030305]">
+      <div className="min-h-[60vh] flex items-center justify-center text-slate-500 text-sm bg-[#0b0a17]">
         <div className="flex items-center gap-3">
           <div className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
           <span>Carregando informações do comerciante...</span>
@@ -110,7 +110,7 @@ export default function ComerciantePortalPage() {
         : '0.0';
 
     return (
-      <div className="max-w-7xl mx-auto px-4 py-8 space-y-8 bg-[#030305] text-slate-100">
+      <div className="max-w-7xl mx-auto px-4 py-8 space-y-8 bg-[#0b0a17] text-slate-100">
         {/* Dashboard Top Header Dark Luxury */}
         <div className="relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-[#0a0a14]/90 p-6 sm:p-8 rounded-3xl border border-white/[0.08] shadow-[0_0_40px_rgba(0,0,0,0.8)] backdrop-blur-xl">
           <div className="absolute top-0 right-0 w-80 h-80 bg-purple-600/10 rounded-full blur-3xl pointer-events-none -z-0" />
@@ -129,7 +129,7 @@ export default function ComerciantePortalPage() {
 
           <Link
             href="/comerciante/locais/novo"
-            className="relative z-10 inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold text-xs rounded-2xl transition shadow-[0_0_25px_rgba(168,85,247,0.4)] hover:shadow-[0_0_35px_rgba(168,85,247,0.6)] hover:scale-[1.02]"
+            className="relative z-10 inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-[#faf6ee] hover:bg-white text-[#0b0a17] font-bold text-xs rounded-2xl transition shadow-[0_0_25px_rgba(242,166,90,0.4)] hover:shadow-[0_0_35px_rgba(242,166,90,0.6)] hover:scale-[1.02]"
           >
             <Plus className="w-4 h-4" />
             Cadastrar Novo Estabelecimento
@@ -139,7 +139,7 @@ export default function ComerciantePortalPage() {
         {/* Metrics Row Dark Luxury */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           <div className="bg-[#0a0a14]/90 p-6 rounded-3xl border border-white/[0.08] hover:border-purple-500/30 shadow-[0_0_30px_rgba(0,0,0,0.5)] backdrop-blur-xl flex items-center gap-4 transition">
-            <div className="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center shadow-[0_0_15px_rgba(168,85,247,0.2)]">
+            <div className="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center shadow-[0_0_15px_rgba(242,166,90,0.2)]">
               <Building2 className="w-7 h-7" />
             </div>
             <div>
@@ -185,7 +185,7 @@ export default function ComerciantePortalPage() {
             </div>
           ) : places.length === 0 ? (
             <div className="bg-[#0a0a14]/90 rounded-3xl border border-white/[0.08] p-12 text-center space-y-5 shadow-[0_0_40px_rgba(0,0,0,0.6)] backdrop-blur-xl">
-              <div className="w-16 h-16 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center mx-auto text-3xl shadow-[0_0_20px_rgba(168,85,247,0.3)]">
+              <div className="w-16 h-16 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center mx-auto text-3xl shadow-[0_0_20px_rgba(242,166,90,0.3)]">
                 🏪
               </div>
               <div className="space-y-2">
@@ -196,7 +196,7 @@ export default function ComerciantePortalPage() {
               </div>
               <Link
                 href="/comerciante/locais/novo"
-                className="inline-flex items-center gap-2 px-6 py-3.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold text-xs rounded-2xl transition shadow-[0_0_20px_rgba(168,85,247,0.4)]"
+                className="inline-flex items-center gap-2 px-6 py-3.5 bg-[#faf6ee] hover:bg-white text-[#0b0a17] font-bold text-xs rounded-2xl transition shadow-[0_0_20px_rgba(242,166,90,0.4)]"
               >
                 <Plus className="w-4 h-4" />
                 Cadastrar Meu Primeiro Estabelecimento
@@ -297,7 +297,7 @@ export default function ComerciantePortalPage() {
 
   // Caso o usuário não esteja logado como comerciante: Landing page informativa Dark Luxury + formulário
   return (
-    <div className="space-y-16 pb-20 bg-[#030305] text-slate-100 min-h-screen">
+    <div className="space-y-16 pb-20 bg-[#0b0a17] text-slate-100 min-h-screen">
       {/* Hero Section Dark Luxury */}
       <section className="relative py-16 sm:py-24 px-4 overflow-hidden">
         {/* Ambient Glow Orbs */}
@@ -310,7 +310,7 @@ export default function ComerciantePortalPage() {
             </span>
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight text-white">
               Faça sua empresa ser descoberta por milhares de{' '}
-              <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-purple-200 bg-clip-text text-transparent">
                 clientes e turistas
               </span>
               .
@@ -375,7 +375,7 @@ export default function ComerciantePortalPage() {
                 }}
                 className={`flex-1 py-3 text-xs font-bold border-b-2 transition ${
                   authMode === 'login'
-                    ? 'border-purple-500 text-purple-400 shadow-[0_2px_10px_rgba(168,85,247,0.4)]'
+                    ? 'border-purple-500 text-purple-400 shadow-[0_2px_10px_rgba(242,166,90,0.4)]'
                     : 'border-transparent text-slate-500 hover:text-slate-300'
                 }`}
               >
@@ -389,7 +389,7 @@ export default function ComerciantePortalPage() {
                 }}
                 className={`flex-1 py-3 text-xs font-bold border-b-2 transition ${
                   authMode === 'register'
-                    ? 'border-purple-500 text-purple-400 shadow-[0_2px_10px_rgba(168,85,247,0.4)]'
+                    ? 'border-purple-500 text-purple-400 shadow-[0_2px_10px_rgba(242,166,90,0.4)]'
                     : 'border-transparent text-slate-500 hover:text-slate-300'
                 }`}
               >
@@ -461,7 +461,7 @@ export default function ComerciantePortalPage() {
               <button
                 type="submit"
                 disabled={submittingAuth}
-                className="w-full py-3.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 disabled:opacity-50 text-white font-bold text-xs rounded-2xl transition shadow-[0_0_25px_rgba(168,85,247,0.4)] mt-3"
+                className="w-full py-3.5 bg-[#faf6ee] hover:bg-white disabled:opacity-50 text-[#0b0a17] font-bold text-xs rounded-2xl transition shadow-[0_0_25px_rgba(242,166,90,0.4)] mt-3"
               >
                 {submittingAuth
                   ? 'Processando...'
