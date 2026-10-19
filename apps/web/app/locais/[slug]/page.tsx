@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Check,
 } from 'lucide-react';
+import { CidadeArte, slugCidade } from '../../../components/cidade-arte';
 
 const DAY_LABELS: Record<string, string> = {
   SUNDAY: 'Domingo',
@@ -149,8 +150,8 @@ export default async function PlaceDetailPage({
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-slate-600 text-6xl">
-                📸
+              <div className="relative w-full h-full">
+                <CidadeArte slug={slugCidade(place.city)} />
               </div>
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a14] via-transparent to-transparent opacity-40 pointer-events-none" />

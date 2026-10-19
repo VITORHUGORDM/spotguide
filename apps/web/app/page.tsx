@@ -9,6 +9,7 @@ import { DivisorNuvem } from '../components/hero/divisor-nuvem';
 import { CidadeArte, slugCidade } from '../components/cidade-arte';
 import '../components/hero/secoes.css';
 import { carregaStats, type GuiaStats } from '../lib/guia-stats';
+import { ApiClient } from '../lib/api-client';
 import {
   Search,
   MapPin,
@@ -128,9 +129,11 @@ export default function HomePage() {
   const [search, setSearch] = useState('');
   const [city, setCity] = useState('');
   const [stats, setStats] = useState<GuiaStats | null>(null);
+  const [porCidade, setPorCidade] = useState<Record<string, number>>({});
 
   useEffect(() => {
     carregaStats().then(setStats);
+    ApiClient.getCities().then((lista) => setPorCidade(Object.fromEntries(lista.map((c) => [c.city, c.count]))));
   }, []);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -271,9 +274,16 @@ export default function HomePage() {
               </div>
               <div className="cidade-card__veu" />
               <div className="relative z-10 h-full flex flex-col justify-between p-5 sm:p-6">
-                <span className="hero-mono self-start text-[11px] text-[#faf6ee] bg-[#0b0a17]/55 backdrop-blur-md px-3 py-1 rounded-full border border-white/15">
-                  {city.tag}
-                </span>
+                <div className="flex items-start justify-between gap-2">
+                  <span className="hero-mono text-[11px] text-[#faf6ee] bg-[#0b0a17]/55 backdrop-blur-md px-3 py-1 rounded-full border border-white/15">
+                    {city.tag}
+                  </span>
+                  {porCidade[city.name] > 0 && (
+                    <span className="hero-mono text-[11px] text-[#0b0a17] bg-[#faf6ee] px-3 py-1 rounded-full">
+                      {porCidade[city.name]} {porCidade[city.name] === 1 ? 'lugar' : 'lugares'}
+                    </span>
+                  )}
+                </div>
                 <div className="space-y-1">
                   <h3 className={`hero-titulo text-[#faf6ee] leading-none ${i === 0 ? 'text-4xl sm:text-5xl' : 'text-2xl'}`}>
                     {city.name}

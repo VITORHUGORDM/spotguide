@@ -15,6 +15,7 @@ import {
   Navigation,
   RotateCcw,
 } from 'lucide-react';
+import { CidadeArte, slugCidade } from '../../components/cidade-arte';
 
 function LocaisContent() {
   const searchParams = useSearchParams();
@@ -280,8 +281,8 @@ function LocaisContent() {
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-5xl bg-zinc-900 text-zinc-600">
-                      🏢
+                    <div className="relative w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out">
+                      <CidadeArte slug={slugCidade(place.city)} />
                     </div>
                   )}
 
