@@ -17,7 +17,30 @@ function agoraNoBrasil() {
     hourCycle: 'h23',
   }).formatToParts(new Date());
   const pega = (tipo: string) => partes.find((p) => p.type === tipo)?.value ?? '';
-  return { dia: pega('weekday').toUpperCase() as (typeof DIAS)[number], hhmm: `${pega('hour')}${pega('minute')}` };
+  const dia = pega('weekday').toUpperCase() as (typeof DIAS)[number];
+  const ontem = DIAS[(DIAS.indexOf(dia) + 6) % 7];
+  return { dia, ontem, hhmm: `${pega('hour')}${pega('minute')}` };
+}
+
+/**
+ * Aberto agora: dentro do horário de hoje, ou ainda na madrugada de um horário de ontem que vira a meia-noite
+ * (sexta 18:00-02:00 está aberto no sábado à 01:00). Fechamento menor ou igual à abertura = vira a meia-noite.
+ */
+export function filtroAbertoAgora({ dia, ontem, hhmm }: { dia: string; ontem: string; hhmm: string }) {
+  return Prisma.sql`EXISTS (
+    SELECT 1 FROM place_hours h
+    WHERE h.place_id = p.id AND h.is_closed = FALSE
+      AND h.open_time IS NOT NULL AND h.close_time IS NOT NULL
+      AND (
+        (h.day = ${dia}::"DayOfWeek"
+          AND REPLACE(h.open_time, ':', '') <= ${hhmm}
+          AND (REPLACE(h.close_time, ':', '') > ${hhmm} OR REPLACE(h.close_time, ':', '') <= REPLACE(h.open_time, ':', '')))
+        OR
+        (h.day = ${ontem}::"DayOfWeek"
+          AND REPLACE(h.close_time, ':', '') <= REPLACE(h.open_time, ':', '')
+          AND REPLACE(h.close_time, ':', '') > ${hhmm})
+      )
+  )`;
 }
 
 export class PlacesRepository {
@@ -64,17 +87,7 @@ export class PlacesRepository {
         Prisma.sql`(p.name ILIKE ${termo} OR p.description ILIKE ${termo} OR p.neighborhood ILIKE ${termo})`
       );
     }
-    if (query.openNow) {
-      const { dia, hhmm } = agoraNoBrasil();
-      // vira a meia-noite quando o fechamento é menor que a abertura (ex.: 18:00-02:00)
-      filtros.push(Prisma.sql`EXISTS (
-        SELECT 1 FROM place_hours h
-        WHERE h.place_id = p.id AND h.day = ${dia}::"DayOfWeek" AND h.is_closed = FALSE
-          AND h.open_time IS NOT NULL AND h.close_time IS NOT NULL
-          AND REPLACE(h.open_time, ':', '') <= ${hhmm}
-          AND (REPLACE(h.close_time, ':', '') > ${hhmm} OR REPLACE(h.close_time, ':', '') <= REPLACE(h.open_time, ':', ''))
-      )`);
-    }
+    if (query.openNow) filtros.push(filtroAbertoAgora(agoraNoBrasil()));
 
     const ordem: Record<string, Prisma.Sql> = {
       rating: Prisma.sql`t."averageRating" DESC, t."totalReviews" DESC, t.name ASC`,
