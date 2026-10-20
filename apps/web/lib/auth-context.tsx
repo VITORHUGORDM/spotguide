@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { UserResponse, LoginInput, RegisterInput } from '@guia/contracts';
+import { UserResponse, LoginInput, RegisterFormInput } from '@guia/contracts';
 import { ApiClient } from './api-client';
 
 interface AuthContextType {
@@ -9,7 +9,7 @@ interface AuthContextType {
   token: string | null;
   isLoading: boolean;
   login: (data: LoginInput) => Promise<UserResponse>;
-  register: (data: RegisterInput) => Promise<UserResponse>;
+  register: (data: RegisterFormInput) => Promise<UserResponse>;
   logout: () => void;
 }
 
@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return res.user;
   };
 
-  const register = async (data: RegisterInput) => {
+  const register = async (data: RegisterFormInput) => {
     const res = await ApiClient.register(data);
     setToken(res.accessToken);
     setUser(res.user);

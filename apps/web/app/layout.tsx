@@ -6,7 +6,6 @@ import './tema.css';
 import { AuthProvider } from '../lib/auth-context';
 import { SiteNav } from '../components/site-nav';
 import { SiteFooter } from '../components/site-footer';
-import { Grain } from '../components/grain';
 import { SITE_URL } from '../lib/cidades';
 
 export const metadata: Metadata = {
@@ -37,7 +36,6 @@ export default function RootLayout({
     <html lang="pt-BR" className="dark">
       <body className="min-h-screen flex flex-col antialiased bg-[#0b0a17] text-[#faf6ee] selection:bg-[#f2a65a] selection:text-[#0b0a17]">
         <AuthProvider>
-          <Grain />
           <SiteNav />
           <main className="flex-1">{children}</main>
           <SiteFooter />

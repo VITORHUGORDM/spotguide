@@ -1,129 +1,129 @@
 import { prisma } from '../../shared/database/prisma.js';
-import { SearchPlacesQuery } from '@guia/contracts';
+import { PlaceListItem, SearchPlacesQuery } from '@guia/contracts';
+import { COMODIDADE_IDS } from '@guia/contracts/comodidades';
+import { normalizaUf } from '@guia/contracts/brasil';
 import { Prisma } from '@prisma/client';
+import { nomeOficial } from '../../shared/geo/municipios.js';
+
+const DIAS = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'] as const;
+
+/** Dia da semana e hora ("1830") em Brasília, que é como os comerciantes cadastram o horário. */
+function agoraNoBrasil() {
+  const partes = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Sao_Paulo',
+    weekday: 'long',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(new Date());
+  const pega = (tipo: string) => partes.find((p) => p.type === tipo)?.value ?? '';
+  return { dia: pega('weekday').toUpperCase() as (typeof DIAS)[number], hhmm: `${pega('hour')}${pega('minute')}` };
+}
 
 export class PlacesRepository {
-  async search(query: SearchPlacesQuery) {
-    const { lat, lng, radiusKm, city, categorySlug, minRating, search, page, limit } = query;
+  /** Devolve a página pedida e o total de resultados (para "carregar mais"). */
+  async search(query: SearchPlacesQuery): Promise<{ items: PlaceListItem[]; total: number }> {
+    const { lat, lng, radiusKm, city, state, categorySlug, minRating, search, page, limit } = query;
     const offset = (page - 1) * limit;
+    const geo = lat !== undefined && lng !== undefined;
+    const sort = query.sort === 'distance' && !geo ? 'rating' : (query.sort ?? (geo ? 'distance' : 'rating'));
 
-    // Se houver coordenadas GPS, calculamos a distância geográfica com Haversine via SQL parametrizado
-    if (lat !== undefined && lng !== undefined) {
-      const places = await prisma.$queryRaw<any[]>`
-        SELECT 
-          p.id, 
-          p.name, 
-          p.slug, 
-          p.description, 
-          p.city, 
-          p.state,
-          p.average_rating as "averageRating", 
-          p.total_reviews as "totalReviews",
-          p.latitude, 
-          p.longitude,
-          c.id as "categoryId",
-          c.name as "categoryName",
-          c.slug as "categorySlug",
-          c.icon_name as "categoryIcon",
-          (
-            6371 * acos(LEAST(1.0, GREATEST(-1.0,
-              cos(radians(${lat})) * cos(radians(p.latitude)) *
-              cos(radians(p.longitude) - radians(${lng})) +
-              sin(radians(${lat})) * sin(radians(p.latitude))
-            )))
-          ) AS "distanceKm",
-          (
-            SELECT url FROM place_photos 
-            WHERE place_id = p.id AND is_cover = TRUE 
-            LIMIT 1
-          ) AS "coverPhotoUrl"
-        FROM places p
-        JOIN categories c ON c.id = p.category_id
-        WHERE p.is_active = TRUE
-          ${city ? Prisma.sql`AND LOWER(p.city) = LOWER(${city})` : Prisma.empty}
-          ${categorySlug ? Prisma.sql`AND c.slug = ${categorySlug}` : Prisma.empty}
-          ${minRating ? Prisma.sql`AND p.average_rating >= ${minRating}` : Prisma.empty}
-          ${search ? Prisma.sql`AND (LOWER(p.name) LIKE LOWER(${'%' + search + '%'}) OR LOWER(p.description) LIKE LOWER(${'%' + search + '%'}))` : Prisma.empty}
-          AND (
-            6371 * acos(LEAST(1.0, GREATEST(-1.0,
-              cos(radians(${lat})) * cos(radians(p.latitude)) *
-              cos(radians(p.longitude) - radians(${lng})) +
-              sin(radians(${lat})) * sin(radians(p.latitude))
-            )))
-          ) <= ${radiusKm}
-        ORDER BY "distanceKm" ASC
-        LIMIT ${limit} OFFSET ${offset};
-      `;
+    const uf = state ? normalizaUf(state) : undefined;
+    const categorias = categorySlug?.split(',').map((c) => c.trim()).filter(Boolean) ?? [];
+    // só ids que existem: o resto é ignorado em vez de virar consulta
+    const comodidades = (query.amenities?.split(',') ?? []).map((c) => c.trim()).filter((c) => (COMODIDADE_IDS as string[]).includes(c));
 
-      return places.map((p) => ({
-        id: p.id,
-        name: p.name,
-        slug: p.slug,
-        description: p.description,
-        city: p.city,
-        state: p.state,
-        category: {
-          id: p.categoryId,
-          name: p.categoryName,
-          slug: p.categorySlug,
-          iconName: p.categoryIcon,
-        },
-        coverPhotoUrl: p.coverPhotoUrl ?? null,
-        averageRating: Number(p.averageRating),
-        totalReviews: Number(p.totalReviews),
-        latitude: Number(p.latitude),
-        longitude: Number(p.longitude),
-        distanceKm: Number(Number(p.distanceKm).toFixed(1)),
-      }));
+    // distância exata só para quem passou no retângulo (que usa o índice de coordenadas)
+    const distancia = geo
+      ? Prisma.sql`(6371 * acos(LEAST(1.0, GREATEST(-1.0,
+          cos(radians(${lat})) * cos(radians(p.latitude)) * cos(radians(p.longitude) - radians(${lng})) +
+          sin(radians(${lat})) * sin(radians(p.latitude))))))`
+      : Prisma.sql`NULL::float8`;
+
+    const filtros: Prisma.Sql[] = [Prisma.sql`p.is_active = TRUE`];
+    if (geo) {
+      const dLat = radiusKm / 111.32;
+      const dLng = radiusKm / (111.32 * Math.max(Math.cos((lat * Math.PI) / 180), 0.01));
+      filtros.push(
+        Prisma.sql`p.latitude BETWEEN ${lat - dLat} AND ${lat + dLat} AND p.longitude BETWEEN ${lng - dLng} AND ${lng + dLng}`
+      );
+    }
+    if (city) filtros.push(Prisma.sql`LOWER(p.city) = LOWER(${nomeOficial(city, uf)})`);
+    if (uf) filtros.push(Prisma.sql`UPPER(p.state) = ${uf}`);
+    else if (state) filtros.push(Prisma.sql`LOWER(p.state) = LOWER(${state})`);
+    if (categorias.length) filtros.push(Prisma.sql`c.slug IN (${Prisma.join(categorias)})`);
+    if (minRating) filtros.push(Prisma.sql`p.average_rating >= ${minRating}`);
+    // sem faixa de preço cadastrada não dá para saber se cabe no bolso: fica de fora quando o filtro está ligado
+    if (query.maxPrice) filtros.push(Prisma.sql`p.price_level IS NOT NULL AND p.price_level <= ${query.maxPrice}`);
+    if (comodidades.length) filtros.push(Prisma.sql`p.amenities @> ${comodidades}::text[]`);
+    if (query.verified) filtros.push(Prisma.sql`p.is_verified = TRUE`);
+    if (query.hasPhoto) filtros.push(Prisma.sql`ph.url IS NOT NULL`);
+    if (search) {
+      const termo = `%${search.replace(/[\\%_]/g, '\\$&')}%`;
+      filtros.push(
+        Prisma.sql`(p.name ILIKE ${termo} OR p.description ILIKE ${termo} OR p.neighborhood ILIKE ${termo})`
+      );
+    }
+    if (query.openNow) {
+      const { dia, hhmm } = agoraNoBrasil();
+      // vira a meia-noite quando o fechamento é menor que a abertura (ex.: 18:00-02:00)
+      filtros.push(Prisma.sql`EXISTS (
+        SELECT 1 FROM place_hours h
+        WHERE h.place_id = p.id AND h.day = ${dia}::"DayOfWeek" AND h.is_closed = FALSE
+          AND h.open_time IS NOT NULL AND h.close_time IS NOT NULL
+          AND REPLACE(h.open_time, ':', '') <= ${hhmm}
+          AND (REPLACE(h.close_time, ':', '') > ${hhmm} OR REPLACE(h.close_time, ':', '') <= REPLACE(h.open_time, ':', ''))
+      )`);
     }
 
-    // Busca padrão sem GPS (por Cidade, Categoria ou Busca Textual)
-    const where: Prisma.PlaceWhereInput = {
-      isActive: true,
-      ...(city && { city: { equals: city, mode: 'insensitive' } }),
-      ...(categorySlug && { category: { slug: categorySlug } }),
-      ...(minRating && { averageRating: { gte: minRating } }),
-      ...(search && {
-        OR: [
-          { name: { contains: search, mode: 'insensitive' } },
-          { description: { contains: search, mode: 'insensitive' } },
-        ],
-      }),
+    const ordem: Record<string, Prisma.Sql> = {
+      rating: Prisma.sql`t."averageRating" DESC, t."totalReviews" DESC, t.name ASC`,
+      reviews: Prisma.sql`t."totalReviews" DESC, t."averageRating" DESC, t.name ASC`,
+      recent: Prisma.sql`t."createdAt" DESC`,
+      name: Prisma.sql`t.name ASC`,
+      distance: Prisma.sql`t."distanceKm" ASC, t.name ASC`,
     };
 
-    const places = await prisma.place.findMany({
-      where,
-      include: {
-        category: true,
-        photos: {
-          where: { isCover: true },
-          take: 1,
-        },
-      },
-      orderBy: { averageRating: 'desc' },
-      skip: offset,
-      take: limit,
-    });
+    const linhas = await prisma.$queryRaw<any[]>`
+      SELECT t.*, COUNT(*) OVER()::int AS total
+      FROM (
+        SELECT p.id, p.name, p.slug, p.description, p.city, p.state,
+               p.average_rating AS "averageRating", p.total_reviews AS "totalReviews",
+               p.price_level AS "priceLevel", p.amenities,
+               p.latitude, p.longitude, p.created_at AS "createdAt",
+               c.id AS "categoryId", c.name AS "categoryName", c.slug AS "categorySlug", c.icon_name AS "categoryIcon",
+               ph.url AS "coverPhotoUrl",
+               ${distancia} AS "distanceKm"
+        FROM places p
+        JOIN categories c ON c.id = p.category_id
+        LEFT JOIN LATERAL (
+          SELECT url FROM place_photos WHERE place_id = p.id ORDER BY is_cover DESC, display_order ASC LIMIT 1
+        ) ph ON TRUE
+        WHERE ${Prisma.join(filtros, ' AND ')}
+      ) t
+      ${geo ? Prisma.sql`WHERE t."distanceKm" <= ${radiusKm}` : Prisma.empty}
+      ORDER BY ${ordem[sort]}, t.id
+      LIMIT ${limit} OFFSET ${offset}
+    `;
 
-    return places.map((p) => ({
+    const items = linhas.map((p) => ({
       id: p.id,
       name: p.name,
       slug: p.slug,
       description: p.description,
       city: p.city,
       state: p.state,
-      category: {
-        id: p.category.id,
-        name: p.category.name,
-        slug: p.category.slug,
-        iconName: p.category.iconName,
-      },
-      coverPhotoUrl: p.photos[0]?.url ?? null,
+      category: { id: p.categoryId, name: p.categoryName, slug: p.categorySlug, iconName: p.categoryIcon },
+      coverPhotoUrl: p.coverPhotoUrl ?? null,
       averageRating: Number(p.averageRating),
-      totalReviews: p.totalReviews,
-      latitude: p.latitude,
-      longitude: p.longitude,
+      totalReviews: Number(p.totalReviews),
+      priceLevel: p.priceLevel === null ? null : Number(p.priceLevel),
+      amenities: p.amenities ?? [],
+      latitude: Number(p.latitude),
+      longitude: Number(p.longitude),
+      ...(geo && { distanceKm: Number(Number(p.distanceKm).toFixed(1)) }),
     }));
+    return { items, total: linhas[0]?.total ?? (page > 1 ? offset : 0) };
   }
 
   async findBySlug(slug: string) {
@@ -191,81 +191,5 @@ export class PlacesRepository {
     return prisma.place.delete({
       where: { id },
     });
-  }
-
-  async getCities(search?: string) {
-    const dbCities = await prisma.place.groupBy({
-      by: ['city', 'state'],
-      where: {
-        isActive: true,
-        ...(search
-          ? {
-              OR: [
-                { city: { contains: search, mode: 'insensitive' } },
-                { state: { contains: search, mode: 'insensitive' } },
-              ],
-            }
-          : {}),
-      },
-      _count: {
-        id: true,
-      },
-      orderBy: {
-        _count: {
-          id: 'desc',
-        },
-      },
-      take: 10,
-    });
-
-    const popularCities = [
-      { city: 'Gramado', state: 'RS' },
-      { city: 'Campos do Jordão', state: 'SP' },
-      { city: 'Florianópolis', state: 'SC' },
-      { city: 'Rio de Janeiro', state: 'RJ' },
-      { city: 'São Paulo', state: 'SP' },
-      { city: 'Curitiba', state: 'PR' },
-      { city: 'Balneário Camboriú', state: 'SC' },
-      { city: 'Porto Alegre', state: 'RS' },
-      { city: 'Salvador', state: 'BA' },
-      { city: 'Belo Horizonte', state: 'MG' },
-      { city: 'Bonito', state: 'MS' },
-      { city: 'Paraty', state: 'RJ' },
-      { city: 'Monte Verde', state: 'MG' },
-      { city: 'Foz do Iguaçu', state: 'PR' },
-      { city: 'Jericoacoara', state: 'CE' },
-      { city: 'Maragogi', state: 'AL' },
-    ];
-
-    const cityMap = new Map<string, { city: string; state: string; count: number }>();
-
-    for (const item of dbCities) {
-      cityMap.set(`${item.city.toLowerCase()}-${item.state.toLowerCase()}`, {
-        city: item.city,
-        state: item.state,
-        count: item._count.id,
-      });
-    }
-
-    const filteredPopular = search
-      ? popularCities.filter(
-          (c) =>
-            c.city.toLowerCase().includes(search.toLowerCase()) ||
-            c.state.toLowerCase().includes(search.toLowerCase())
-        )
-      : popularCities;
-
-    for (const item of filteredPopular) {
-      const key = `${item.city.toLowerCase()}-${item.state.toLowerCase()}`;
-      if (!cityMap.has(key)) {
-        cityMap.set(key, {
-          city: item.city,
-          state: item.state,
-          count: 0,
-        });
-      }
-    }
-
-    return Array.from(cityMap.values()).slice(0, 10);
   }
 }

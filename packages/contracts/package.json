@@ -3,6 +3,24 @@
   "version": "0.0.1",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./brasil": {
+      "types": "./dist/brasil.d.ts",
+      "default": "./dist/brasil.js"
+    },
+    "./validadores": {
+      "types": "./dist/validadores.d.ts",
+      "default": "./dist/validadores.js"
+    },
+    "./comodidades": {
+      "types": "./dist/comodidades.d.ts",
+      "default": "./dist/comodidades.js"
+    }
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch"

@@ -1,6 +1,7 @@
 import fastify from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
+import compress from '@fastify/compress';
 import rateLimit from '@fastify/rate-limit';
 import jwt from '@fastify/jwt';
 import multipart from '@fastify/multipart';
@@ -13,6 +14,7 @@ import { authRoutes } from './modules/auth/auth.routes.js';
 import { categoriesRoutes } from './modules/categories/categories.routes.js';
 import { placesRoutes } from './modules/places/places.routes.js';
 import { reviewsRoutes } from './modules/reviews/reviews.routes.js';
+import { lookupRoutes } from './modules/lookup/lookup.routes.js';
 import { photosRoutes } from './modules/photos/photos.routes.js';
 import { UPLOADS_DIR } from './modules/photos/photos.service.js';
 
@@ -27,6 +29,9 @@ export function buildApp() {
     contentSecurityPolicy: env.NODE_ENV === 'production',
   });
 
+  // 1b. Gzip/Brotli: as listas de lugares e cidades encolhem bem
+  app.register(compress, { threshold: 512 });
+
   // 2. CORS Restritivo (Zero Trust: apenas origens autorizadas)
   const allowedOrigins = env.ALLOWED_ORIGINS.split(',').map((o) => o.trim());
   app.register(cors, {
@@ -39,6 +44,8 @@ export function buildApp() {
       cb(new Error('Origem não permitida pela política CORS'), false);
     },
     credentials: true,
+    // o site lê o total de resultados deste cabeçalho
+    exposedHeaders: ['X-Total-Count'],
   });
 
   // 3. Rate Limit Global (Sliding Window / Prevenção de DoS e Abuse)
@@ -57,6 +64,9 @@ export function buildApp() {
   app.register(fastifyStatic, {
     root: UPLOADS_DIR,
     prefix: '/uploads/',
+    // o nome de cada arquivo é um UUID novo a cada envio, então o navegador pode guardar para sempre
+    maxAge: '365d',
+    immutable: true,
     // o site (outra porta) precisa poder carregar as imagens
     setHeaders: (reply) => void reply.header('Cross-Origin-Resource-Policy', 'cross-origin'),
   });
@@ -75,6 +85,7 @@ export function buildApp() {
   app.register(placesRoutes, { prefix: '/api/v1/places' });
   app.register(photosRoutes, { prefix: '/api/v1/places' });
   app.register(reviewsRoutes, { prefix: '/api/v1/reviews' });
+  app.register(lookupRoutes, { prefix: '/api/v1/lookup' });
 
   return app;
 }

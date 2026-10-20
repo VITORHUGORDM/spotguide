@@ -97,6 +97,19 @@ const slugify = (s: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)+/g, '');
 
+/**
+ * Preço e comodidades de exemplo por categoria (os lugares são fictícios).
+ * O "i" (posição do lugar na cidade) varia um pouco para os filtros terem o que separar.
+ */
+const PERFIL: Record<Lugar['categoria'], (i: number) => { priceLevel: number | null; amenities: string[] }> = {
+  restaurantes: (i) => ({ priceLevel: 2 + (i % 3), amenities: ['PIX', 'CARD', 'RESERVATIONS', ...(i % 2 ? ['OUTDOOR', 'VEGETARIAN'] : ['PET_FRIENDLY']), ...(i % 3 === 0 ? ['KIDS'] : [])] }),
+  cafes: (i) => ({ priceLevel: 1 + (i % 2), amenities: ['WIFI', 'PIX', 'CARD', ...(i % 2 ? ['PET_FRIENDLY', 'VEGETARIAN'] : ['AIR_CONDITIONING'])] }),
+  bares: (i) => ({ priceLevel: 2 + (i % 2), amenities: ['PIX', 'CARD', 'LIVE_MUSIC', ...(i % 2 ? ['OUTDOOR', 'PET_FRIENDLY'] : ['DELIVERY'])] }),
+  hospedagem: (i) => ({ priceLevel: 2 + (i % 3), amenities: ['WIFI', 'PARKING', 'AIR_CONDITIONING', 'CARD', ...(i % 2 ? ['ACCESSIBLE', 'PET_FRIENDLY'] : ['KIDS'])] }),
+  turismo: (i) => ({ priceLevel: i % 2 ? 1 : null, amenities: ['PARKING', ...(i % 2 ? ['ACCESSIBLE', 'KIDS'] : ['PET_FRIENDLY', 'OUTDOOR'])] }),
+  comercio: () => ({ priceLevel: 2, amenities: ['PIX', 'CARD', 'AIR_CONDITIONING', 'ACCESSIBLE'] }),
+};
+
 async function main() {
   const dono = await prisma.user.findUnique({ where: { email: 'comerciante@guiaturistico.com' } });
   if (!dono) throw new Error('Rode antes: pnpm --filter @guia/api db:seed');
@@ -106,15 +119,17 @@ async function main() {
 
   let criados = 0;
   for (const c of CIDADES) {
-    for (const l of c.lugares) {
+    for (const [i, l] of c.lugares.entries()) {
       const categoryId = porSlug.get(l.categoria);
       if (!categoryId) throw new Error(`Categoria ausente: ${l.categoria}`);
       const slug = slugify(`${l.nome}-${c.cidade}`);
 
       await prisma.place.upsert({
         where: { slug },
-        update: {},
+        // reaplicar o seed completa preço e comodidades, sem mexer no que o comerciante já editou nos outros campos
+        update: PERFIL[l.categoria](i),
         create: {
+          ...PERFIL[l.categoria](i),
           ownerId: dono.id,
           categoryId,
           name: l.nome,

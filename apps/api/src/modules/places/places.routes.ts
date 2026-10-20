@@ -24,8 +24,10 @@ export async function placesRoutes(app: FastifyInstance) {
     placesController.getMyPlaces.bind(placesController)
   );
 
-  // Rota de autocomplete de cidades
+  // Cidades (autocomplete e lista por estado), estados com lugares e números da home
   app.get('/cities', placesController.getCities.bind(placesController));
+  app.get('/states', placesController.getStates.bind(placesController));
+  app.get('/stats', placesController.getStats.bind(placesController));
 
   app.get('/id/:id', placesController.getById.bind(placesController));
 

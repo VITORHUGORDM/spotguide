@@ -2,61 +2,164 @@ import {
   PlaceListItem,
   PlaceDetail,
   CategoryResponse,
-  CreatePlaceInput,
-  UpdatePlaceInput,
+  CreatePlaceFormInput,
+  UpdatePlaceFormInput,
   CreateReviewInput,
   ReplyReviewInput,
   ReviewResponse,
-  RegisterInput,
+  RegisterFormInput,
   LoginInput,
   AuthResponse,
 } from '@guia/contracts';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3333/api/v1';
 
+/** Erro da API com a mensagem em português e, quando houver, qual campo do formulário falhou. */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+    /** nome do campo -> mensagem */
+    public readonly campos: Record<string, string> = {}
+  ) {
+    super(message);
+  }
+}
+
+async function leErro(res: Response, padrao: string): Promise<ApiError> {
+  const corpo = await res.json().catch(() => ({}));
+  const campos: Record<string, string> = {};
+  for (const i of (corpo.issues ?? []) as { path: string; message: string }[]) {
+    // path vem como "hours.0.openTime"; o primeiro erro de cada campo basta
+    if (!(i.path in campos)) campos[i.path] = i.message;
+  }
+  return new ApiError(corpo.message || corpo.error || padrao, res.status, campos);
+}
+
+export interface EnderecoCep {
+  cep: string;
+  street: string;
+  neighborhood: string;
+  city: string;
+  state: string;
+}
+
+export interface GuiaStats {
+  lugares: number;
+  cidades: number;
+  estados: number;
+  avaliacoes: number;
+  nota: number;
+}
+
+export interface SearchParams {
+  city?: string;
+  state?: string;
+  /** um slug ou vários separados por vírgula */
+  categorySlug?: string;
+  search?: string;
+  minRating?: number;
+  sort?: 'rating' | 'reviews' | 'recent' | 'name' | 'distance';
+  openNow?: boolean;
+  hasPhoto?: boolean;
+  verified?: boolean;
+  /** faixa de preço máxima, de 1 ($) a 4 ($$$$) */
+  maxPrice?: number;
+  /** ids separados por vírgula; o local precisa ter todos */
+  amenities?: string;
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
+  page?: number;
+  limit?: number;
+}
+
+function montaQuery(p: SearchParams) {
+  const q = new URLSearchParams();
+  for (const [chave, valor] of Object.entries(p)) {
+    if (valor === undefined || valor === '' || valor === false) continue;
+    q.set(chave, String(valor));
+  }
+  return q.toString();
+}
+
+/**
+ * No servidor: com `revalidate` a página fica em cache e se renova sozinha; sem ele, sempre busca.
+ * No navegador o cache HTTP já cuida (a API manda Cache-Control curto).
+ */
+function cacheInit(revalidate?: number): RequestInit {
+  if (revalidate !== undefined) return { next: { revalidate } } as RequestInit;
+  return typeof window === 'undefined' ? { cache: 'no-store' } : {};
+}
+
 export class ApiClient {
   static async getCategories(): Promise<CategoryResponse[]> {
-    const res = await fetch(`${API_BASE_URL}/categories`, {
-      next: { revalidate: 3600 },
-    });
+    const res = await fetch(`${API_BASE_URL}/categories`, cacheInit(3600));
     if (!res.ok) throw new Error('Falha ao buscar categorias');
     return res.json();
   }
 
-  static async getCities(q?: string): Promise<{ city: string; state: string; count: number }[]> {
-    const query = q ? `?q=${encodeURIComponent(q)}` : '';
-    const res = await fetch(`${API_BASE_URL}/places/cities${query}`, {
-      cache: 'no-store',
-    });
-    if (!res.ok) return [];
+  static async getCities(
+    q?: string,
+    opts: { uf?: string; limit?: number; signal?: AbortSignal } = {}
+  ): Promise<{ city: string; state: string; count: number }[]> {
+    const query = new URLSearchParams();
+    if (q) query.set('q', q);
+    if (opts.uf) query.set('uf', opts.uf);
+    if (opts.limit) query.set('limit', String(opts.limit));
+    try {
+      const res = await fetch(`${API_BASE_URL}/places/cities?${query}`, { signal: opts.signal, ...cacheInit(60) });
+      return res.ok ? res.json() : [];
+    } catch (err) {
+      if (opts.signal?.aborted) throw err;
+      return [];
+    }
+  }
+
+  /** Endereço do CEP, ou null se não existir. Outros erros (serviço fora do ar) viram ApiError. */
+  static async buscaCep(cep: string, signal?: AbortSignal): Promise<EnderecoCep | null> {
+    const res = await fetch(`${API_BASE_URL}/lookup/cep/${encodeURIComponent(cep)}`, { signal });
+    if (res.status === 404) return null;
+    if (!res.ok) throw await leErro(res, 'Não conseguimos consultar o CEP agora');
     return res.json();
   }
 
-  static async searchPlaces(params: {
-    city?: string;
-    categorySlug?: string;
-    search?: string;
-    minRating?: number;
-    lat?: number;
-    lng?: number;
-    radiusKm?: number;
-    limit?: number;
-  }): Promise<PlaceListItem[]> {
-    const query = new URLSearchParams();
-    if (params.city) query.set('city', params.city);
-    if (params.categorySlug) query.set('categorySlug', params.categorySlug);
-    if (params.search) query.set('search', params.search);
-    if (params.minRating) query.set('minRating', String(params.minRating));
-    if (params.lat) query.set('lat', String(params.lat));
-    if (params.lng) query.set('lng', String(params.lng));
-    if (params.radiusKm) query.set('radiusKm', String(params.radiusKm));
-    if (params.limit) query.set('limit', String(params.limit));
+  /** Estados que já têm lugares, com a contagem. */
+  static async getStates(): Promise<{ uf: string; count: number }[]> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/places/states`, cacheInit(60));
+      return res.ok ? res.json() : [];
+    } catch {
+      return [];
+    }
+  }
 
-    const res = await fetch(`${API_BASE_URL}/places?${query.toString()}`, {
-      cache: 'no-store',
+  /** Números da home; vem pronto da API em vez de somar a lista de lugares no navegador. */
+  static async getStats(): Promise<GuiaStats | null> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/places/stats`, cacheInit(60));
+      return res.ok ? res.json() : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Uma página de resultados e o total (cabeçalho X-Total-Count). */
+  static async searchPlacesPage(
+    params: SearchParams,
+    opts: { signal?: AbortSignal; revalidate?: number } = {}
+  ): Promise<{ items: PlaceListItem[]; total: number }> {
+    const res = await fetch(`${API_BASE_URL}/places?${montaQuery(params)}`, {
+      signal: opts.signal,
+      ...cacheInit(opts.revalidate),
     });
     if (!res.ok) throw new Error('Falha ao buscar estabelecimentos');
-    return res.json();
+    const items: PlaceListItem[] = await res.json();
+    return { items, total: Number(res.headers.get('X-Total-Count') ?? items.length) };
+  }
+
+  static async searchPlaces(params: SearchParams, opts: { revalidate?: number } = {}): Promise<PlaceListItem[]> {
+    return (await this.searchPlacesPage(params, opts)).items;
   }
 
   static async getPlaceBySlug(slug: string): Promise<PlaceDetail> {
@@ -96,10 +199,7 @@ export class ApiClient {
       },
       body: JSON.stringify(data),
     });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || 'Erro ao enviar avaliação');
-    }
+    if (!res.ok) throw await leErro(res, 'Erro ao enviar avaliação');
     return res.json();
   }
 
@@ -116,10 +216,7 @@ export class ApiClient {
       },
       body: JSON.stringify(data),
     });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || 'Erro ao responder avaliação');
-    }
+    if (!res.ok) throw await leErro(res, 'Erro ao responder avaliação');
     return res.json();
   }
 
@@ -130,23 +227,17 @@ export class ApiClient {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || 'Erro ao realizar login');
-    }
+    if (!res.ok) throw await leErro(res, 'Erro ao realizar login');
     return res.json();
   }
 
-  static async register(data: RegisterInput): Promise<AuthResponse> {
+  static async register(data: RegisterFormInput): Promise<AuthResponse> {
     const res = await fetch(`${API_BASE_URL}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || 'Erro ao realizar cadastro');
-    }
+    if (!res.ok) throw await leErro(res, 'Erro ao realizar cadastro');
     return res.json();
   }
 
@@ -168,7 +259,7 @@ export class ApiClient {
     return res.json();
   }
 
-  static async createPlace(data: CreatePlaceInput, token: string): Promise<PlaceDetail> {
+  static async createPlace(data: CreatePlaceFormInput, token: string): Promise<PlaceDetail> {
     const res = await fetch(`${API_BASE_URL}/places`, {
       method: 'POST',
       headers: {
@@ -177,16 +268,13 @@ export class ApiClient {
       },
       body: JSON.stringify(data),
     });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || 'Erro ao cadastrar estabelecimento');
-    }
+    if (!res.ok) throw await leErro(res, 'Erro ao cadastrar estabelecimento');
     return res.json();
   }
 
   static async updatePlace(
     id: string,
-    data: UpdatePlaceInput,
+    data: UpdatePlaceFormInput,
     token: string
   ): Promise<PlaceDetail> {
     const res = await fetch(`${API_BASE_URL}/places/${id}`, {
@@ -197,10 +285,7 @@ export class ApiClient {
       },
       body: JSON.stringify(data),
     });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || 'Erro ao atualizar estabelecimento');
-    }
+    if (!res.ok) throw await leErro(res, 'Erro ao atualizar estabelecimento');
     return res.json();
   }
 
@@ -216,10 +301,7 @@ export class ApiClient {
       headers: { Authorization: `Bearer ${token}` }, // sem Content-Type: o navegador define o boundary
       body: form,
     });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || err.error || 'Erro ao enviar a foto');
-    }
+    if (!res.ok) throw await leErro(res, 'Erro ao enviar a foto');
     return res.json();
   }
 

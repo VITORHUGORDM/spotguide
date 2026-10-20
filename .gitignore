@@ -30,3 +30,4 @@ Thumbs.db
 
 # Fotos enviadas por comerciantes (em produção use S3/Cloudinary)
 apps/api/uploads/
+.next-prod

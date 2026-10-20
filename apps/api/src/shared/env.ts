@@ -12,6 +12,8 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default('15m'),
   REFRESH_TOKEN_SECRET: z.string().min(32, 'REFRESH_TOKEN_SECRET deve ter ao menos 32 caracteres'),
   REFRESH_TOKEN_EXPIRES_IN: z.string().default('7d'),
+  // segredo do hash de CPF/CNPJ; separado do JWT para poder girar um sem afetar o outro
+  DOCUMENT_PEPPER: z.string().min(32).optional(),
   RATE_LIMIT_MAX: z.coerce.number().default(100),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
   PUBLIC_URL: z.string().url().default('http://localhost:3333'),

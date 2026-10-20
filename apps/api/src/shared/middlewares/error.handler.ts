@@ -5,12 +5,15 @@ import { env } from '../env.js';
 
 export function errorHandler(error: FastifyError, request: FastifyRequest, reply: FastifyReply) {
   // 1. Erros de validação Zod (Entrada inválida)
-  if (error instanceof ZodError) {
+  // Os schemas vêm de @guia/contracts (CJS) e este arquivo importa o zod como ESM: são duas cópias da
+  // classe, então `instanceof` falha. Reconhecer pelo nome mantém o 400 em vez de um 500.
+  if (error instanceof ZodError || (error as { name?: string }).name === 'ZodError') {
+    const { issues } = error as unknown as ZodError;
     return reply.status(400).send({
       statusCode: 400,
       error: 'Validation Error',
-      message: 'Dados enviados na requisição são inválidos',
-      issues: error.issues.map((i) => ({
+      message: issues[0]?.message ?? 'Dados enviados na requisição são inválidos',
+      issues: issues.map((i) => ({
         path: i.path.join('.'),
         message: i.message,
       })),
@@ -22,6 +25,8 @@ export function errorHandler(error: FastifyError, request: FastifyRequest, reply
     return reply.status(error.statusCode).send({
       statusCode: error.statusCode,
       error: error.message,
+      message: error.message,
+      ...(error.field && { issues: [{ path: error.field, message: error.message }] }),
     });
   }
 

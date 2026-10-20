@@ -7,13 +7,13 @@ import '@fontsource/ibm-plex-mono/400.css';
 import './hero.css';
 
 import { IlhaSvg } from './ilha-svg';
-import { MURO, NUVENS, HUD_PADRAO, CHIPS } from '../../lib/hero-data';
+import { MURO, NUVENS, CHIPS } from '../../lib/hero-data';
 import { Utensils, Coffee, Beer, Hotel, Camera, ShoppingBag } from 'lucide-react';
-import { carregaStats } from '../../lib/guia-stats';
+import type { GuiaStats } from '../../lib/guia-stats';
 import { estiloNuvem, nuvensDa } from './motion/nuvens';
-import { aguardaRecursos, criarEntrada } from './motion/entrada';
 import { iniciarPalco } from './motion/palco';
-import { iniciarHudVivo, pintaHud, type AlvoHud, type ElsHud } from './motion/hud';
+// só os tipos: o código do hud/entrada usa o GSAP e é carregado depois do primeiro desenho da página
+import type { ElsHud } from './motion/hud';
 
 const NOME = 'SpotGuide'.split('');
 
@@ -61,7 +61,7 @@ function Pin() {
   );
 }
 
-export function Hero() {
+export function Hero({ stats }: { stats: GuiaStats }) {
   const ref = useRef<HTMLElement>(null);
   const hora = useRef<HTMLSpanElement>(null);
   const lugares = useRef<HTMLSpanElement>(null);
@@ -81,33 +81,34 @@ export function Hero() {
     const reduzido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const limpezas: Array<() => void> = [iniciarPalco(hero)];
     let cancelado = false;
-    let alvo: AlvoHud = HUD_PADRAO;
 
-    if (reduzido) {
-      hero.dataset.entrada = 'feita';
-      pintaHud(els, alvo);
-      carregaStats().then((s) => !cancelado && pintaHud(els, (alvo = s)));
-      limpezas.push(iniciarHudVivo(els));
-    } else {
-      let parar = () => {};
-      Promise.all([carregaStats(), aguardaRecursos(hero)]).then(([stats]) => {
-        if (cancelado) return;
-        alvo = stats;
-        const tl = criarEntrada(hero, els, alvo);
-        tl.eventCallback('onComplete', () => {
-          hero.dataset.entrada = 'feita';
-          parar = iniciarHudVivo(els);
-        });
-        limpezas.push(() => tl.kill());
+    // O GSAP (e o código que o usa) vem num pedaço separado: o texto e a ilha já aparecem sem esperar por ele.
+    // Os números do HUD chegam prontos do servidor; nada aqui espera pela API.
+    Promise.all([import('./motion/hud'), import('./motion/entrada')]).then(async ([hud, entrada]) => {
+      if (cancelado) return;
+
+      if (reduzido) {
+        hero.dataset.entrada = 'feita';
+        hud.pintaHud(els, stats);
+        limpezas.push(hud.iniciarHudVivo(els));
+        return;
+      }
+
+      await entrada.aguardaRecursos(hero);
+      if (cancelado) return;
+      const tl = entrada.criarEntrada(hero, els, stats);
+      tl.eventCallback('onComplete', () => {
+        hero.dataset.entrada = 'feita';
+        limpezas.push(hud.iniciarHudVivo(els));
       });
-      limpezas.push(() => parar());
-    }
+      limpezas.push(() => tl.kill());
+    });
 
     return () => {
       cancelado = true;
       limpezas.forEach((l) => l());
     };
-  }, []);
+  }, [stats]);
 
   return (
     <section ref={ref} id="topo" className="hero" data-entrada="pendente" data-visivel="true">
@@ -220,12 +221,12 @@ export function Hero() {
                 <span ref={hora}>18:40</span> · Brasil · 29°22′S
               </span>
               <span>
-                Lugares no guia: <span ref={lugares}>{HUD_PADRAO.lugares}</span>
+                Lugares no guia: <span ref={lugares}>{stats.lugares}</span>
               </span>
             </div>
             <div className="hero__hud-dir" data-in="fade">
-              Nota média <span ref={nota}>{String(HUD_PADRAO.nota).replace('.', ',')}</span> ·{' '}
-              <span ref={avaliacoes}>{HUD_PADRAO.avaliacoes}</span> avaliações
+              Nota média <span ref={nota}>{String(stats.nota).replace('.', ',')}</span> ·{' '}
+              <span ref={avaliacoes}>{stats.avaliacoes}</span> avaliações
             </div>
             <a href="#cidades" className="hero__dica" data-in="fade">
               [ role para ver as cidades ]

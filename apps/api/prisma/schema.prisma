@@ -31,6 +31,13 @@ model User {
   role         UserRole      @default(TRAVELER)
   avatarUrl    String?       @map("avatar_url")
   isVerified   Boolean       @default(false) @map("is_verified")
+
+  // CPF/CNPJ do comerciante: guardamos só o hash (para impedir conta duplicada) e uma máscara
+  // para a pessoa reconhecer ("***.456.789-**"). O número inteiro nunca fica no banco.
+  documentHash String?       @unique @map("document_hash") @db.Char(64)
+  documentType String?       @map("document_type") @db.VarChar(4)
+  documentMask String?       @map("document_mask") @db.VarChar(20)
+
   createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -79,6 +86,10 @@ model Place {
   isActive      Boolean @default(true) @map("is_active")
   isVerified    Boolean @default(false) @map("is_verified")
 
+  // faixa de preço de 1 ($) a 4 ($$$$) e comodidades (ids de COMODIDADES em @guia/contracts)
+  priceLevel    Int?     @map("price_level") @db.SmallInt
+  amenities     String[] @default([])
+
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -91,6 +102,9 @@ model Place {
 
   @@index([city, categoryId], map: "idx_places_city_category")
   @@index([latitude, longitude], map: "idx_places_coordinates")
+  @@index([isActive, state, city], map: "idx_places_active_state_city")
+  @@index([isActive, averageRating(sort: Desc), totalReviews(sort: Desc)], map: "idx_places_active_rating")
+  @@index([amenities], type: Gin, map: "idx_places_amenities")
   @@map("places")
 }
 
@@ -119,6 +133,7 @@ model PlacePhoto {
 
   place Place @relation(fields: [placeId], references: [id], onDelete: Cascade)
 
+  @@index([placeId, isCover(sort: Desc), displayOrder], map: "idx_photos_place_cover")
   @@map("place_photos")
 }
 

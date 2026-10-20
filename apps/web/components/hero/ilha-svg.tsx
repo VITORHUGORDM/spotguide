@@ -254,10 +254,6 @@ export function IlhaSvg() {
         <filter id="il-borra" x="-20%" y="-60%" width="140%" height="220%">
           <feGaussianBlur stdDeviation="9" />
         </filter>
-        <filter id="il-grao-terra" x="0" y="0" width="100%" height="100%">
-          <feTurbulence type="fractalNoise" baseFrequency=".045" numOctaves="4" seed="3" />
-          <feColorMatrix values="0 0 0 0 .18  0 0 0 0 .05  0 0 0 0 .02  0 0 0 .9 -.28" />
-        </filter>
         <clipPath id="il-corpo">
           <path d={corpo.d} />
         </clipPath>
@@ -291,7 +287,6 @@ export function IlhaSvg() {
         />
       </g>
       <g clipPath="url(#il-corpo)">
-        <rect x="60" y="540" width="1330" height="460" filter="url(#il-grao-terra)" opacity=".7" />
         {/* camadas de solo */}
         <path d="M60 690 Q300 740 560 700 T1000 720 T1390 690 V760 Q1100 800 800 770 T60 770Z" fill="#8b3519" opacity=".35" />
         <path d="M200 800 Q480 850 760 820 T1260 790 V860 Q1000 900 760 880 T200 870Z" fill="#4d1c0f" opacity=".3" />

@@ -9,8 +9,8 @@ import { CidadeArte } from '../../../components/cidade-arte';
 import '../../../components/hero/secoes.css';
 
 export const dynamicParams = false;
-// os lugares mudam quando comerciantes cadastram: sempre busca na API
-export const dynamic = 'force-dynamic';
+// gerada uma vez e renovada a cada minuto: quem cadastra um local aparece aqui em até 60s, e ninguém espera a API
+export const revalidate = 60;
 
 export function generateStaticParams() {
   return CIDADES.map((c) => ({ slug: c.slug }));
@@ -39,7 +39,7 @@ export default async function CidadePage({ params }: { params: Promise<{ slug: s
 
   let lugares: PlaceListItem[] = [];
   try {
-    lugares = await ApiClient.searchPlaces({ city: cidade.nome, limit: 50 });
+    lugares = await ApiClient.searchPlaces({ city: cidade.nome, state: cidade.uf, limit: 50 }, { revalidate: 60 });
   } catch {
     lugares = [];
   }
@@ -117,7 +117,7 @@ export default async function CidadePage({ params }: { params: Promise<{ slug: s
             <div className="flex items-end justify-between gap-4">
               <h2 className="hero-titulo text-2xl sm:text-3xl tracking-[-0.04em]">{g.nome}</h2>
               <Link
-                href={`/locais?cidade=${encodeURIComponent(cidade.nome)}&categoria=${catSlug}`}
+                href={`/locais?estado=${cidade.uf}&cidade=${encodeURIComponent(cidade.nome)}&categoria=${catSlug}`}
                 className="hero-mono text-xs text-[#f2a65a] hover:text-[#faf6ee] transition"
               >
                 ver no mapa e na lista →
@@ -132,7 +132,7 @@ export default async function CidadePage({ params }: { params: Promise<{ slug: s
                 >
                   <div className="relative h-36 overflow-hidden">
                     {l.coverPhotoUrl ? (
-                      <img src={l.coverPhotoUrl} alt={l.name} className="w-full h-full object-cover group-hover:scale-105 transition duration-700" />
+                      <img src={l.coverPhotoUrl} alt={l.name} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition duration-700" />
                     ) : (
                       <div className="absolute inset-0 group-hover:scale-105 transition duration-700">
                         <CidadeArte slug={cidade.slug} />

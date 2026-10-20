@@ -13,6 +13,7 @@
     "db:seed:cidades": "tsx prisma/seed-cidades.ts"
   },
   "dependencies": {
+    "@fastify/compress": "^9.2.2",
     "@fastify/cors": "^10.0.2",
     "@fastify/helmet": "^13.0.1",
     "@fastify/jwt": "^9.0.4",

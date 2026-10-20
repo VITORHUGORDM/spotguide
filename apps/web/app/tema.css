@@ -53,35 +53,3 @@ body {
 .botao-pilula:hover .botao-pilula__circulo svg {
   transform: rotate(-45deg);
 }
-
-/* ---------- grão ---------- */
-.hero-grao {
-  position: fixed;
-  inset: -180px;
-  z-index: 100;
-  pointer-events: none;
-  background-size: 180px 180px;
-  mix-blend-mode: soft-light;
-  opacity: 0.3;
-  animation: grao 1s steps(10) infinite;
-}
-@keyframes grao {
-  0% { transform: translate(0, 0); }
-  10% { transform: translate(-37px, 22px); }
-  20% { transform: translate(53px, -41px); }
-  30% { transform: translate(-71px, -14px); }
-  40% { transform: translate(24px, 63px); }
-  50% { transform: translate(-48px, 49px); }
-  60% { transform: translate(66px, 17px); }
-  70% { transform: translate(-19px, -58px); }
-  80% { transform: translate(41px, -27px); }
-  90% { transform: translate(-62px, 35px); }
-  100% { transform: translate(0, 0); }
-}
-
-
-@media (prefers-reduced-motion: reduce) {
-  .hero-grao {
-    animation: none;
-  }
-}

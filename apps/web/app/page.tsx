@@ -1,33 +1,17 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { CityAutocomplete } from '../components/city-autocomplete';
+import { BuscaHome } from '../components/busca-home';
 import { Hero } from '../components/hero/hero';
 import { DivisorNuvem } from '../components/hero/divisor-nuvem';
-import { CidadeArte, slugCidade } from '../components/cidade-arte';
+import { CidadeArte } from '../components/cidade-arte';
 import '../components/hero/secoes.css';
-import { carregaStats, type GuiaStats } from '../lib/guia-stats';
+import { buscaStats } from '../lib/guia-stats';
 import { CIDADES } from '../lib/cidades';
 import { ApiClient } from '../lib/api-client';
-import {
-  Search,
-  MapPin,
-  Utensils,
-  Beer,
-  Coffee,
-  Hotel,
-  Camera,
-  ShoppingBag,
-  Sparkles,
-  ArrowRight,
-  ShieldCheck,
-  Navigation,
-  Star,
-  Building2,
-  Compass,
-} from 'lucide-react';
+import { ESTADOS } from '@guia/contracts/brasil';
+import { Utensils, Beer, Coffee, Hotel, Camera, ShoppingBag, ArrowRight } from 'lucide-react';
+
+// a home é gerada uma vez e se renova sozinha a cada minuto; ninguém espera a API para ver a página
+export const revalidate = 60;
 
 const CATEGORIES = [
   {
@@ -81,29 +65,18 @@ const CATEGORIES = [
 ];
 
 
-export default function HomePage() {
-  const router = useRouter();
-  const [search, setSearch] = useState('');
-  const [city, setCity] = useState('');
-  const [stats, setStats] = useState<GuiaStats | null>(null);
-  const [porCidade, setPorCidade] = useState<Record<string, number>>({});
-
-  useEffect(() => {
-    carregaStats().then(setStats);
-    ApiClient.getCities().then((lista) => setPorCidade(Object.fromEntries(lista.map((c) => [c.city, c.count]))));
-  }, []);
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const params = new URLSearchParams();
-    if (search.trim()) params.set('busca', search.trim());
-    if (city.trim()) params.set('cidade', city.trim());
-    router.push(`/locais?${params.toString()}`);
-  };
+export default async function HomePage() {
+  const [stats, comLugares, estadosComLugares] = await Promise.all([
+    buscaStats(),
+    ApiClient.getCities(undefined, { limit: 40 }),
+    ApiClient.getStates(),
+  ]);
+  const porCidade: Record<string, number> = Object.fromEntries(comLugares.map((c) => [c.city, c.count]));
+  const porEstado = new Map(estadosComLugares.map((e) => [e.uf, e.count]));
 
   return (
     <div className="bg-[#0b0a17] text-slate-100 overflow-x-clip">
-      <Hero />
+      <Hero stats={stats} />
 
       <div className="hero-depois space-y-16 pb-24">
       {/* Busca por cidade: o antigo hero, agora logo depois da ilha */}
@@ -116,48 +89,15 @@ export default function HomePage() {
           </h2>
         </div>
 
-        <form
-          onSubmit={handleSearchSubmit}
-          className="bg-[#0b0b14]/85 backdrop-blur-2xl p-2.5 sm:p-3 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.8)] border border-white/[0.12] ring-1 ring-purple-500/20 flex flex-col md:flex-row items-center gap-2 hover:border-purple-500/40 transition-all duration-300"
-        >
-          <div className="flex-1 w-full flex items-center px-4 py-3 gap-3 bg-white/[0.03] hover:bg-white/[0.05] focus-within:bg-white/[0.06] rounded-2xl border border-white/[0.05] focus-within:border-purple-500/50 transition">
-            <Search className="w-5 h-5 text-purple-400 flex-shrink-0" />
-            <input
-              type="text"
-              placeholder="O que você procura? (ex: café colonial, pizza, pousada...)"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full text-xs sm:text-sm bg-transparent outline-none text-white placeholder-slate-500 font-medium"
-            />
-          </div>
-
-          <div className="w-full md:w-72 flex items-center px-4 py-3 gap-2.5 bg-white/[0.03] hover:bg-white/[0.05] focus-within:bg-white/[0.06] rounded-2xl border border-white/[0.05] focus-within:border-indigo-500/50 transition">
-            <MapPin className="w-5 h-5 text-cyan-400 flex-shrink-0" />
-            <CityAutocomplete
-              value={city}
-              onChange={(val) => setCity(val)}
-              placeholder="Digite a cidade..."
-              className="w-full"
-              inputClassName="font-medium text-xs sm:text-sm text-white"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full md:w-auto px-7 py-3.5 bg-[#faf6ee] hover:bg-white text-[#0b0a17] font-extrabold text-xs sm:text-sm rounded-2xl transition shadow-[0_0_25px_rgba(242,166,90,0.4)] hover:shadow-[0_0_35px_rgba(242,166,90,0.6)] flex items-center justify-center gap-2 group flex-shrink-0 hover:scale-[1.02]"
-          >
-            <span>Explorar</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </button>
-        </form>
+        <BuscaHome />
 
         <dl className="grid grid-cols-2 md:grid-cols-6 border-y border-white/[0.1] divide-x divide-white/[0.1]">
           {[
-            ['Locais', stats ? String(stats.lugares) : '—'],
-            ['Cidades', stats ? String(stats.cidades) : '—'],
+            ['Locais', String(stats.lugares)],
+            ['Cidades', String(stats.cidades)],
             ['Categorias', String(CATEGORIES.length)],
-            ['Avaliações', stats ? String(stats.avaliacoes) : '—'],
-            ['Nota média', stats ? String(stats.nota).replace('.', ',') : '—'],
+            ['Avaliações', String(stats.avaliacoes)],
+            ['Nota média', String(stats.nota).replace('.', ',')],
             ['Rota', 'Google Maps'],
           ].map(([rotulo, valor]) => (
             <div key={rotulo} className="px-4 py-5 space-y-1.5 border-t border-white/[0.1] first:border-t-0 md:border-t-0">
@@ -254,11 +194,49 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Todos os estados */}
+      <section className="max-w-7xl mx-auto px-4 space-y-8">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5">
+          <div className="space-y-4">
+            <p className="hero-mono text-xs tracking-wide text-purple-300">[ o Brasil inteiro ]</p>
+            <h2 className="hero-titulo text-3xl sm:text-5xl tracking-[-0.045em] leading-[1.05] text-[#faf6ee]">
+              Os 27 estados,<br />mais de 5 mil cidades.
+            </h2>
+          </div>
+          <Link href="/estados" className="botao-pilula self-start sm:self-auto">
+            <span>Explorar por estado</span>
+            <span className="botao-pilula__circulo" aria-hidden="true">
+              <ArrowRight />
+            </span>
+          </Link>
+        </div>
+
+        <ul className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-2">
+          {ESTADOS.map((e) => {
+            const n = porEstado.get(e.uf) ?? 0;
+            return (
+              <li key={e.uf}>
+                <Link
+                  href={`/estados/${e.slug}`}
+                  title={e.nome}
+                  className={`flex items-baseline justify-between gap-2 rounded-2xl border px-3.5 py-3 transition hover:border-[#f2a65a]/70 hover:bg-white/[0.06] ${
+                    n ? 'border-white/[0.18] bg-white/[0.04]' : 'border-white/[0.08]'
+                  }`}
+                >
+                  <span className="hero-titulo text-lg text-[#faf6ee]">{e.uf}</span>
+                  <span className={`hero-mono text-[11px] ${n ? 'text-[#f2a65a]' : 'text-slate-500'}`}>{n || '—'}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
       {/* Para comerciantes */}
       <section className="max-w-7xl mx-auto px-4">
         <div className="cta-ceu">
-          <img className="cta-ceu__nuvem cta-ceu__nuvem--a" src="/img/nuvem-6.webp" alt="" />
-          <img className="cta-ceu__nuvem cta-ceu__nuvem--b" src="/img/nuvem-1.webp" alt="" />
+          <img className="cta-ceu__nuvem cta-ceu__nuvem--a" src="/img/nuvem-6.webp" alt="" loading="lazy" decoding="async" />
+          <img className="cta-ceu__nuvem cta-ceu__nuvem--b" src="/img/nuvem-1.webp" alt="" loading="lazy" decoding="async" />
           <div className="relative z-10 max-w-2xl space-y-6">
             <p className="hero-mono text-xs tracking-wide text-[#faf6ee]/80">[ para comerciantes ]</p>
             <h2 className="hero-titulo text-3xl sm:text-5xl tracking-[-0.045em] leading-[1.05] text-[#faf6ee]">

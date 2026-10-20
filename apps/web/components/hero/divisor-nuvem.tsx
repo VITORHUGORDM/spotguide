@@ -2,7 +2,7 @@
 export function DivisorNuvem({ src, espelha }: { src: string; espelha?: boolean }) {
   return (
     <div className={`divisor-nuvem${espelha ? ' divisor-nuvem--espelha' : ''}`} aria-hidden="true">
-      <img src={`/img/${src}.webp`} alt="" />
+      <img src={`/img/${src}.webp`} alt="" loading="lazy" decoding="async" />
     </div>
   );
 }

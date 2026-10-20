@@ -175,6 +175,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@fastify/compress':
+        specifier: ^9.2.2
+        version: 9.2.2
       '@fastify/cors':
         specifier: ^10.0.2
         version: 10.1.0
@@ -1372,6 +1375,9 @@ packages:
 
   '@fastify/busboy@3.2.3':
     resolution: {integrity: sha512-fmo/IKgkenPzz3qTKG+sIUXdF/Kv83AkvvOXJHPTHJeKJbat8SsL1ihUaFaDotqoEl4UZ1Lf8Eb/3vK6eaWX2A==}
+
+  '@fastify/compress@9.2.2':
+    resolution: {integrity: sha512-FF1CSw1ED4f2lZmYDXmpHgDJLj752JBr7Tdv6Z5SYkZmbvwzlagWwKvF3OGWPzbL7pRFgoki6rNyh/yu8tb92w==}
 
   '@fastify/cors@10.1.0':
     resolution: {integrity: sha512-MZyBCBJtII60CU9Xme/iE4aEy8G7QpzGR8zkdXZkDFt7ElEMachbE61tfhAG/bvSaULlqlf0huMT12T7iqEmdQ==}
@@ -6511,6 +6517,12 @@ snapshots:
       fast-uri: 4.2.2
 
   '@fastify/busboy@3.2.3': {}
+
+  '@fastify/compress@9.2.2':
+    dependencies:
+      '@fastify/accept-negotiator': 2.1.1
+      fastify-plugin: 6.0.1
+      mime-db: 1.54.0
 
   '@fastify/cors@10.1.0':
     dependencies:

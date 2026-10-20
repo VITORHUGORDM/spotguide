@@ -16,6 +16,8 @@ import {
   Check,
 } from 'lucide-react';
 import { CidadeArte, slugCidade } from '../../../components/cidade-arte';
+import { COMODIDADES, FAIXAS_PRECO } from '@guia/contracts/comodidades';
+import { formataTelefone, normalizaTelefone, normalizaUrlHttp } from '@guia/contracts/validadores';
 
 const DAY_LABELS: Record<string, string> = {
   SUNDAY: 'Domingo',
@@ -72,6 +74,11 @@ export default async function PlaceDetailPage({
   const capa = place.photos?.find((f) => f.isCover) ?? place.photos?.[0];
   const outrasFotos = (place.photos ?? []).filter((f) => f.id !== capa?.id);
 
+  const faixaPreco = FAIXAS_PRECO.find((f) => f.nivel === place.priceLevel);
+  const comodidades = COMODIDADES.filter((c) => place.amenities?.includes(c.id));
+  // dados antigos podem ter telefone fora do padrão ou link perigoso: só mostra o que passa na validação
+  const telefone = place.phone ? normalizaTelefone(place.phone) : null;
+  const siteSeguro = place.websiteUrl ? normalizaUrlHttp(place.websiteUrl) : null;
   const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${place.latitude},${place.longitude}`;
 
   const jsonLd = {
@@ -130,10 +137,17 @@ export default async function PlaceDetailPage({
               <span className="px-3 py-1 bg-purple-500/10 text-purple-300 border border-purple-500/30 text-xs font-bold rounded-full uppercase tracking-wider">
                 {place.category.name}
               </span>
-              <span className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full font-semibold">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                Local 100% Verificado
-              </span>
+              {place.isVerified && (
+                <span className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full font-semibold">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  Local verificado
+                </span>
+              )}
+              {faixaPreco && (
+                <span className="px-3 py-1 bg-white/[0.05] text-slate-200 border border-white/[0.12] text-xs font-bold rounded-full" title={faixaPreco.rotulo}>
+                  <span className="font-mono text-[#f2a65a]">{faixaPreco.simbolo}</span> {faixaPreco.rotulo}
+                </span>
+              )}
             </div>
 
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight">
@@ -175,21 +189,21 @@ export default async function PlaceDetailPage({
               Rotas no Google Maps
             </a>
 
-            {place.phone && (
+            {telefone && (
               <a
-                href={`tel:${place.phone}`}
+                href={`tel:+55${telefone}`}
                 className="px-4 py-3.5 bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 border border-white/[0.1] rounded-2xl text-xs font-semibold transition flex items-center gap-2 hover:border-purple-500/40"
               >
                 <Phone className="w-4 h-4 text-purple-400" />
-                {place.phone}
+                {formataTelefone(telefone)}
               </a>
             )}
 
-            {place.websiteUrl && (
+            {siteSeguro && (
               <a
-                href={place.websiteUrl}
+                href={siteSeguro}
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="px-4 py-3.5 bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 border border-white/[0.1] rounded-2xl text-xs font-semibold transition flex items-center gap-2 hover:border-purple-500/40"
               >
                 <Globe className="w-4 h-4 text-cyan-400" />
@@ -253,6 +267,23 @@ export default async function PlaceDetailPage({
               {place.description}
             </p>
           </div>
+
+          {comodidades.length > 0 && (
+            <div className="bg-[#0a0a14]/90 rounded-3xl border border-white/[0.08] p-6 sm:p-8 space-y-4 shadow-[0_0_30px_rgba(0,0,0,0.5)]">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#f2a65a] shadow-[0_0_8px_#f2a65a]" />
+                Comodidades
+              </h2>
+              <ul className="flex flex-wrap gap-2">
+                {comodidades.map((c) => (
+                  <li key={c.id} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs font-semibold text-slate-200">
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    {c.rotulo}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Location & Map Section */}
           <div className="bg-[#0a0a14]/90 rounded-3xl border border-white/[0.08] p-6 sm:p-8 space-y-4 shadow-[0_0_30px_rgba(0,0,0,0.5)] backdrop-blur-xl">

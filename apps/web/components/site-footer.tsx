@@ -23,6 +23,9 @@ export function SiteFooter() {
           <Link href="/locais" className="block text-[#faf6ee]/75 hover:text-[#faf6ee] transition">
             Todos os locais
           </Link>
+          <Link href="/estados" className="block text-[#faf6ee]/75 hover:text-[#faf6ee] transition">
+            Destinos por estado
+          </Link>
           <Link href="/#cidades" className="block text-[#faf6ee]/75 hover:text-[#faf6ee] transition">
             Cidades
           </Link>

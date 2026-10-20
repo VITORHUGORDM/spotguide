@@ -3,92 +3,62 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import type { PlaceDetail, UpdatePlaceFormInput } from '@guia/contracts';
 import { useAuth } from '../../../../../lib/auth-context';
 import { ApiClient } from '../../../../../lib/api-client';
-import { CityAutocomplete } from '../../../../../components/city-autocomplete';
-import { ArrowLeft, Building2, MapPin, CheckCircle, AlertCircle } from 'lucide-react';
-import { PhotoManager, type FotoLocal } from '../../../../../components/photo-manager';
+import { ArrowLeft } from 'lucide-react';
+import { PhotoManager } from '../../../../../components/photo-manager';
+import { FormularioLocal, telefoneParaTela, type ValoresLocal } from '../../../../../components/comerciante/formulario-local';
+
+const paraFormulario = (p: PlaceDetail): ValoresLocal => ({
+  name: p.name,
+  categoryId: p.category.id,
+  description: p.description,
+  coverPhotoUrl: '',
+  phone: telefoneParaTela(p.phone),
+  websiteUrl: p.websiteUrl ?? '',
+  priceLevel: p.priceLevel ?? null,
+  amenities: p.amenities ?? [],
+  postalCode: p.postalCode,
+  street: p.street,
+  number: p.number,
+  neighborhood: p.neighborhood,
+  city: p.city,
+  state: p.state,
+  latitude: String(p.latitude),
+  longitude: String(p.longitude),
+});
 
 export default function EditarLocalPage() {
   const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
 
-  const { user, token, isLoading } = useAuth();
+  const { token, isLoading } = useAuth();
 
+  const [place, setPlace] = useState<PlaceDetail | null>(null);
   const [loadingPlace, setLoadingPlace] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Form Fields
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [phone, setPhone] = useState('');
-  const [websiteUrl, setWebsiteUrl] = useState('');
-  const [street, setStreet] = useState('');
-  const [number, setNumber] = useState('');
-  const [neighborhood, setNeighborhood] = useState('');
-  const [city, setCity] = useState('');
-  const [state, setState] = useState('');
-  const [postalCode, setPostalCode] = useState('');
-  const [latitude, setLatitude] = useState<number>(0);
-  const [longitude, setLongitude] = useState<number>(0);
-  const [slug, setSlug] = useState('');
-  const [fotos, setFotos] = useState<FotoLocal[]>([]);
-
   useEffect(() => {
     if (!id) return;
     ApiClient.getPlaceById(id)
-      .then((place) => {
-        setName(place.name);
-        setDescription(place.description);
-        setPhone(place.phone || '');
-        setWebsiteUrl(place.websiteUrl || '');
-        setStreet(place.street);
-        setNumber(place.number);
-        setNeighborhood(place.neighborhood);
-        setCity(place.city);
-        setState(place.state);
-        setPostalCode(place.postalCode);
-        setLatitude(place.latitude);
-        setLongitude(place.longitude);
-        setSlug(place.slug);
-        setFotos(place.photos ?? []);
-      })
-      .catch((err) => setError('Falha ao carregar dados do local.'))
+      .then(setPlace)
+      .catch(() => setError('Falha ao carregar dados do local.'))
       .finally(() => setLoadingPlace(false));
   }, [id]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const enviar = async (dados: Record<string, unknown>) => {
     if (!token) return;
-
     setError(null);
     setSubmitting(true);
-
     try {
-      await ApiClient.updatePlace(
-        id,
-        {
-          name,
-          description,
-          phone: phone || undefined,
-          websiteUrl: websiteUrl || undefined,
-          street,
-          number,
-          neighborhood,
-          city,
-          state,
-          postalCode,
-          latitude: Number(latitude),
-          longitude: Number(longitude),
-        },
-        token
-      );
-
+      await ApiClient.updatePlace(id, dados as UpdatePlaceFormInput, token);
       router.push('/comerciante');
-    } catch (err: any) {
-      setError(err.message || 'Erro ao atualizar dados.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao atualizar dados.');
+      throw err;
     } finally {
       setSubmitting(false);
     }
@@ -108,205 +78,30 @@ export default function EditarLocalPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-8 bg-[#0b0a17] text-slate-100">
       <div className="space-y-2">
-        <Link
-          href="/comerciante"
-          className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-purple-400 transition"
-        >
+        <Link href="/comerciante" className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-purple-400 transition">
           <ArrowLeft className="w-3.5 h-3.5" />
           Voltar para o painel do comerciante
         </Link>
-        <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
-          Editar Estabelecimento
-        </h1>
-        <p className="text-xs sm:text-sm text-slate-400">
-          Atualize as informações de contato, descrição ou endereço do seu negócio.
-        </p>
+        <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight">Editar Estabelecimento</h1>
+        <p className="text-xs sm:text-sm text-slate-400">Atualize as informações de contato, descrição, preço, comodidades ou endereço do seu negócio.</p>
       </div>
 
-      {error && (
-        <div className="flex items-start gap-2 p-4 bg-red-500/10 text-red-400 text-xs rounded-2xl border border-red-500/20">
-          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-          <span>{error}</span>
-        </div>
+      {place ? (
+        <FormularioLocal
+          modo="editar"
+          inicial={paraFormulario(place)}
+          enviando={submitting}
+          erroGeral={error}
+          rotuloEnviar="Salvar Alterações"
+          onEnviar={enviar}
+        />
+      ) : (
+        error && <p className="text-xs text-red-400">{error}</p>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        <div className="bg-[#0a0a14]/90 p-6 sm:p-8 rounded-3xl border border-white/[0.08] shadow-[0_0_30px_rgba(0,0,0,0.5)] backdrop-blur-xl space-y-6">
-          <div className="flex items-center gap-2 pb-3 border-b border-white/[0.08]">
-            <Building2 className="w-5 h-5 text-purple-400" />
-            <h2 className="text-base font-bold text-white">Informações Principais</h2>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                Nome do Estabelecimento *
-              </label>
-              <input
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.1] rounded-2xl text-xs sm:text-sm text-white placeholder-slate-500 outline-none focus:border-purple-500/60 focus:ring-1 focus:ring-purple-500/30 transition"
-              />
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                Descrição Detalhada *
-              </label>
-              <textarea
-                required
-                rows={4}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.1] rounded-2xl text-xs sm:text-sm text-white placeholder-slate-500 outline-none focus:border-purple-500/60 focus:ring-1 focus:ring-purple-500/30 transition"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Telefone / WhatsApp</label>
-              <input
-                type="text"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.1] rounded-2xl text-xs sm:text-sm text-white placeholder-slate-500 outline-none focus:border-purple-500/60 transition"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Website Oficial</label>
-              <input
-                type="url"
-                value={websiteUrl}
-                onChange={(e) => setWebsiteUrl(e.target.value)}
-                className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.1] rounded-2xl text-xs sm:text-sm text-white placeholder-slate-500 outline-none focus:border-purple-500/60 transition"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-[#0a0a14]/90 p-6 sm:p-8 rounded-3xl border border-white/[0.08] shadow-[0_0_30px_rgba(0,0,0,0.5)] backdrop-blur-xl space-y-6">
-          <div className="flex items-center gap-2 pb-3 border-b border-white/[0.08]">
-            <MapPin className="w-5 h-5 text-cyan-400" />
-            <h2 className="text-base font-bold text-white">Endereço e Coordenadas</h2>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Logradouro *</label>
-              <input
-                type="text"
-                required
-                value={street}
-                onChange={(e) => setStreet(e.target.value)}
-                className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.1] rounded-2xl text-xs sm:text-sm text-white placeholder-slate-500 outline-none focus:border-purple-500/60 transition"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Número *</label>
-              <input
-                type="text"
-                required
-                value={number}
-                onChange={(e) => setNumber(e.target.value)}
-                className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.1] rounded-2xl text-xs sm:text-sm text-white placeholder-slate-500 outline-none focus:border-purple-500/60 transition"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Bairro *</label>
-              <input
-                type="text"
-                required
-                value={neighborhood}
-                onChange={(e) => setNeighborhood(e.target.value)}
-                className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.1] rounded-2xl text-xs sm:text-sm text-white placeholder-slate-500 outline-none focus:border-purple-500/60 transition"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Cidade *</label>
-              <CityAutocomplete
-                value={city}
-                onChange={(c) => setCity(c)}
-                onSelect={(selectedCity, selectedState) => {
-                  setCity(selectedCity);
-                  if (selectedState) setState(selectedState);
-                }}
-                className="w-full"
-                inputClassName="font-medium text-xs sm:text-sm text-white"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Estado *</label>
-              <input
-                type="text"
-                required
-                value={state}
-                onChange={(e) => setState(e.target.value.toUpperCase())}
-                className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.1] rounded-2xl text-xs sm:text-sm text-white placeholder-slate-500 outline-none focus:border-purple-500/60 transition"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">CEP *</label>
-              <input
-                type="text"
-                required
-                value={postalCode}
-                onChange={(e) => setPostalCode(e.target.value)}
-                className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.1] rounded-2xl text-xs sm:text-sm text-white placeholder-slate-500 outline-none focus:border-purple-500/60 transition"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Latitude</label>
-              <input
-                type="number"
-                step="any"
-                value={latitude}
-                onChange={(e) => setLatitude(Number(e.target.value))}
-                className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.1] rounded-2xl text-xs sm:text-sm text-white placeholder-slate-500 outline-none focus:border-purple-500/60 transition"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Longitude</label>
-              <input
-                type="number"
-                step="any"
-                value={longitude}
-                onChange={(e) => setLongitude(Number(e.target.value))}
-                className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.1] rounded-2xl text-xs sm:text-sm text-white placeholder-slate-500 outline-none focus:border-purple-500/60 transition"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-end gap-3 pt-2">
-          <Link
-            href="/comerciante"
-            className="px-6 py-3.5 text-xs font-bold text-slate-400 hover:text-white hover:bg-white/[0.05] rounded-2xl transition"
-          >
-            Cancelar
-          </Link>
-          <button
-            type="submit"
-            disabled={submitting}
-            className="px-8 py-3.5 bg-[#faf6ee] hover:bg-white disabled:opacity-50 text-[#0b0a17] font-bold text-xs rounded-2xl transition shadow-[0_0_25px_rgba(242,166,90,0.4)] flex items-center gap-2"
-          >
-            <CheckCircle className="w-4 h-4" />
-            {submitting ? 'Salvando...' : 'Salvar Alterações'}
-          </button>
-        </div>
-      </form>
-
-      {token && !loadingPlace && (
+      {token && place && (
         <div className="mt-8">
-          <PhotoManager placeId={id} token={token} fotosIniciais={fotos} />
+          <PhotoManager placeId={id} token={token} fotosIniciais={place.photos ?? []} />
         </div>
       )}
     </div>

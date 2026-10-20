@@ -3,11 +3,11 @@ import { contarHud, type AlvoHud, type ElsHud } from './hud';
 
 const espera = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
-/** Espera ilha, nuvens e fontes (no máximo 3s). */
+/** Espera ilha, nuvens e fontes (no máximo 1,8s; depois disso entra com o que já carregou). */
 export async function aguardaRecursos(hero: HTMLElement) {
   const imgs = Array.from(hero.querySelectorAll<HTMLImageElement>('img'));
   const carregadas = Promise.all(imgs.map((i) => (i.complete ? Promise.resolve() : i.decode().catch(() => {}))));
-  await Promise.race([Promise.all([carregadas, document.fonts.ready]), espera(3000)]);
+  await Promise.race([Promise.all([carregadas, document.fonts.ready]), espera(1800)]);
 }
 
 export function criarEntrada(hero: HTMLElement, hud: ElsHud, alvo: AlvoHud): gsap.core.Timeline {

@@ -12,6 +12,8 @@ interface CityOption {
 
 interface CityAutocompleteProps {
   value: string;
+  /** limita a busca a um estado (sigla) */
+  uf?: string;
   onChange: (city: string) => void;
   onSelect?: (city: string, state: string) => void;
   placeholder?: string;
@@ -20,8 +22,12 @@ interface CityAutocompleteProps {
   inputClassName?: string;
 }
 
+// resultados já vistos nesta aba: voltar a uma busca (ou apagar uma letra) não vai à API de novo
+const memoria = new Map<string, CityOption[]>();
+
 export function CityAutocomplete({
   value,
+  uf,
   onChange,
   onSelect,
   placeholder = 'Cidade (ex: Gramado, Rio de Janeiro)',
@@ -36,7 +42,8 @@ export function CityAutocomplete({
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     setQuery(value);
@@ -52,20 +59,44 @@ export function CityAutocomplete({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const searchCities = (text: string) => {
+  const searchCities = (text: string, imediato = false) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(async () => {
+    abortRef.current?.abort();
+
+    const termo = text.trim();
+    const chave = `${uf ?? ''}|${termo.toLowerCase()}`;
+    const guardado = memoria.get(chave);
+    if (guardado) {
+      setOptions(guardado);
+      setLoading(false);
+      return;
+    }
+
+    const buscar = async () => {
+      const ctrl = new AbortController();
+      abortRef.current = ctrl;
       setLoading(true);
       try {
-        const results = await ApiClient.getCities(text.trim());
+        const results = await ApiClient.getCities(termo, { uf, limit: 10, signal: ctrl.signal });
+        memoria.set(chave, results);
         setOptions(results);
-      } catch (err) {
-        console.error('Erro ao buscar cidades:', err);
-      } finally {
         setLoading(false);
+      } catch {
+        // pedido cancelado porque o texto mudou: o próximo já cuida do estado
       }
-    }, 120);
+    };
+    if (imediato) void buscar();
+    else debounceRef.current = setTimeout(buscar, 150);
   };
+
+  // trocou o estado: a lista antiga não vale mais
+  useEffect(() => {
+    setOptions([]);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      abortRef.current?.abort();
+    };
+  }, [uf]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -78,7 +109,7 @@ export function CityAutocomplete({
 
   const handleFocus = () => {
     setIsOpen(true);
-    searchCities(query);
+    searchCities(query, true);
   };
 
   const handleSelectOption = (opt: CityOption) => {
@@ -118,6 +149,10 @@ export function CityAutocomplete({
       <div className="flex items-center w-full">
         <input
           type="text"
+          role="combobox"
+          aria-expanded={isOpen}
+          aria-autocomplete="list"
+          aria-label="Cidade"
           name={name}
           value={query}
           onChange={handleInputChange}
@@ -144,13 +179,13 @@ export function CityAutocomplete({
       {isOpen && (
         <div className="absolute left-0 right-0 top-full mt-2.5 bg-[#0b0b14]/95 backdrop-blur-2xl border border-white/[0.12] rounded-2xl shadow-2xl shadow-purple-950/70 py-2 z-50 max-h-72 overflow-y-auto animate-in fade-in duration-200">
           <div className="px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-purple-300/70 flex items-center justify-between border-b border-white/[0.06]">
-            <span>Cidades Recomendadas</span>
+            <span>{query.trim() ? 'Cidades encontradas' : uf ? `Cidades de ${uf}` : 'Destinos populares'}</span>
             {loading && <span className="animate-spin text-purple-400">●</span>}
           </div>
 
           {options.length === 0 && !loading ? (
             <div className="p-4 text-center text-xs text-slate-400">
-              Nenhuma cidade encontrada para &quot;{query}&quot;. Pressione Buscar para pesquisar em todo o catálogo.
+              Nenhuma cidade encontrada para &quot;{query}&quot;{uf ? ` em ${uf}` : ''}. Confira a grafia ou tire o filtro de estado.
             </div>
           ) : (
             options.map((opt, idx) => (
