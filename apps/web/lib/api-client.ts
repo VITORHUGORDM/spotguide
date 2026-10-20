@@ -178,12 +178,18 @@ export class ApiClient {
     return res.json();
   }
 
-  static async getPlaceReviews(placeId: string): Promise<ReviewResponse[]> {
-    const res = await fetch(`${API_BASE_URL}/reviews/place/${placeId}`, {
+  /** Uma página de avaliações (mais recentes primeiro) e o total (cabeçalho X-Total-Count). */
+  static async getPlaceReviews(
+    placeId: string,
+    page = 1,
+    limit = 10
+  ): Promise<{ items: ReviewResponse[]; total: number }> {
+    const res = await fetch(`${API_BASE_URL}/reviews/place/${placeId}?page=${page}&limit=${limit}`, {
       cache: 'no-store',
     });
     if (!res.ok) throw new Error('Falha ao buscar avaliações');
-    return res.json();
+    const items: ReviewResponse[] = await res.json();
+    return { items, total: Number(res.headers.get('X-Total-Count') ?? items.length) };
   }
 
   static async createReview(

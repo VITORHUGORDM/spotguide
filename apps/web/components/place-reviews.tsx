@@ -1,21 +1,58 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ReviewResponse } from '@guia/contracts';
 import { useAuth } from '../lib/auth-context';
 import { ApiClient } from '../lib/api-client';
 import { Star, MessageSquare, Send, Reply, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 
+const POR_PAGINA = 10;
+
 interface PlaceReviewsProps {
   placeId: string;
   initialReviews: ReviewResponse[];
-  isOwner?: boolean;
+  initialTotal: number;
 }
 
-export function PlaceReviews({ placeId, initialReviews, isOwner }: PlaceReviewsProps) {
+export function PlaceReviews({ placeId, initialReviews, initialTotal }: PlaceReviewsProps) {
   const { user, token } = useAuth();
   const [reviews, setReviews] = useState<ReviewResponse[]>(initialReviews);
+  const [total, setTotal] = useState(initialTotal);
+  const [carregandoMais, setCarregandoMais] = useState(false);
+  // a página é a mesma para todo mundo (cache); quem é o dono só dá para saber no navegador
+  const [isOwner, setIsOwner] = useState(false);
+
+  useEffect(() => {
+    if (!token || !user) return setIsOwner(false);
+    if (user.role === 'ADMIN') return setIsOwner(true);
+    if (user.role !== 'MERCHANT') return setIsOwner(false);
+    let ativo = true;
+    ApiClient.getMyPlaces(token)
+      .then((meus) => ativo && setIsOwner(meus.some((p) => p.id === placeId)))
+      .catch(() => ativo && setIsOwner(false));
+    return () => {
+      ativo = false;
+    };
+  }, [token, user, placeId]);
+
+  const carregaMais = async () => {
+    setCarregandoMais(true);
+    try {
+      // a página seguinte pelo que já está na tela; avaliações novas no meio do caminho podem repetir uma
+      const pagina = Math.floor(reviews.length / POR_PAGINA) + 1;
+      const { items, total: novoTotal } = await ApiClient.getPlaceReviews(placeId, pagina, POR_PAGINA);
+      setReviews((atuais) => {
+        const vistos = new Set(atuais.map((r) => r.id));
+        return [...atuais, ...items.filter((r) => !vistos.has(r.id))];
+      });
+      setTotal(novoTotal);
+    } catch {
+      // o botão continua lá para tentar de novo
+    } finally {
+      setCarregandoMais(false);
+    }
+  };
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -45,6 +82,7 @@ export function PlaceReviews({ placeId, initialReviews, isOwner }: PlaceReviewsP
         token
       );
       setReviews([created, ...reviews]);
+      setTotal((t) => t + 1);
       setComment('');
       setFeedback('Sua avaliação foi enviada com sucesso! Obrigado.');
     } catch (err: any) {
@@ -89,7 +127,7 @@ export function PlaceReviews({ placeId, initialReviews, isOwner }: PlaceReviewsP
             Avaliações e Opiniões
           </h2>
           <p className="text-xs text-slate-400">
-            {reviews.length} {reviews.length === 1 ? 'avaliação registrada' : 'avaliações registradas'}
+            {total} {total === 1 ? 'avaliação registrada' : 'avaliações registradas'}
           </p>
         </div>
       </div>
@@ -97,7 +135,11 @@ export function PlaceReviews({ placeId, initialReviews, isOwner }: PlaceReviewsP
       {/* Review Submission Box Dark Luxury */}
       <div className="bg-[#0a0a14]/90 border border-white/[0.08] rounded-3xl p-6 shadow-[0_0_30px_rgba(0,0,0,0.5)] backdrop-blur-xl">
         <h3 className="text-sm font-bold text-white mb-3">Deixe sua experiência</h3>
-        {user ? (
+        {user && isOwner ? (
+          <p className="text-xs text-slate-400">
+            Este estabelecimento é seu: você não pode avaliá-lo, mas pode responder as avaliações abaixo.
+          </p>
+        ) : user ? (
           <form onSubmit={handleSubmitReview} className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1.5">
@@ -281,6 +323,17 @@ export function PlaceReviews({ placeId, initialReviews, isOwner }: PlaceReviewsP
               )}
             </div>
           ))
+        )}
+
+        {reviews.length < total && (
+          <button
+            type="button"
+            onClick={carregaMais}
+            disabled={carregandoMais}
+            className="w-full py-3 bg-white/[0.04] hover:bg-white/[0.08] disabled:opacity-50 border border-white/[0.08] rounded-2xl text-xs font-semibold text-slate-300 transition"
+          >
+            {carregandoMais ? 'Carregando...' : `Ver mais avaliações (${total - reviews.length})`}
+          </button>
         )}
       </div>
     </div>

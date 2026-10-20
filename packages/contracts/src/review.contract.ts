@@ -31,6 +31,14 @@ export const ReviewResponseSchema = z.object({
 
 export type ReviewResponse = z.infer<typeof ReviewResponseSchema>;
 
+// Paginação da lista de avaliações (o total vem no cabeçalho X-Total-Count)
+export const ListReviewsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(10),
+});
+
+export type ListReviewsQuery = z.infer<typeof ListReviewsQuerySchema>;
+
 // Resposta do Comerciante à Avaliação
 export const ReplyReviewInputSchema = z.object({
   comment: z.string().trim().min(2).max(1000),

@@ -47,6 +47,14 @@ describe('validação devolve 400 com a mensagem de cada campo', () => {
     const res = await app.inject({ method: 'GET', url: '/api/v1/places?limit=500&maxPrice=9' });
     expect(res.statusCode).toBe(400);
   });
+
+  it('avaliações com paginação fora dos limites', async () => {
+    const id = '00000000-0000-0000-0000-000000000000';
+    for (const qs of ['limit=500', 'page=0', 'limit=abc']) {
+      const res = await app.inject({ method: 'GET', url: `/api/v1/reviews/place/${id}?${qs}` });
+      expect(res.statusCode).toBe(400);
+    }
+  });
 });
 
 describe('CEP', () => {

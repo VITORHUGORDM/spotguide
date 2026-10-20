@@ -61,7 +61,7 @@ export default async function PlaceDetailPage({
   const { slug } = await params;
 
   let place;
-  let reviews = [];
+  let reviews;
 
   try {
     place = await ApiClient.getPlaceBySlug(slug);
@@ -315,7 +315,7 @@ export default async function PlaceDetailPage({
           </div>
 
           {/* Reviews & Social Proof */}
-          <PlaceReviews placeId={place.id} initialReviews={reviews} />
+          <PlaceReviews placeId={place.id} initialReviews={reviews.items} initialTotal={reviews.total} />
         </div>
 
         {/* Sidebar Info (1 col) */}
