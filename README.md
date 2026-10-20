@@ -1,5 +1,7 @@
 # SpotGuide
 
+[![CI](https://github.com/VITORHUGORDM/spotguide/actions/workflows/ci.yml/badge.svg)](https://github.com/VITORHUGORDM/spotguide/actions/workflows/ci.yml)
+
 Guia turístico e comercial do Brasil: encontre restaurantes, bares, hotéis e pontos turísticos em **qualquer cidade dos 27 estados**, filtre por preço, comodidades, nota e distância, e abra a rota no Google Maps. Comerciantes cadastram e gerenciam os próprios estabelecimentos e respondem às avaliações.
 
 Projeto de portfólio em monorepo, com **web (Next.js)**, **API (Fastify + PostgreSQL)** e **app mobile (Expo)** compartilhando os mesmos contratos de tipos.
@@ -90,6 +92,22 @@ Para ver o desempenho real, use o build de produção: `pnpm build` e depois `pn
 
 Conta de comerciante para testar localmente (criada pelo seed, só para desenvolvimento): `comerciante@guiaturistico.com` / `Merchant@123456`.
 
+## Testes
+
+```bash
+pnpm test
+```
+
+Roda o Vitest nos três pacotes (**69 testes**), sem precisar de banco:
+
+| Pacote | O que cobre |
+| :--- | :--- |
+| `contracts` | CPF, CNPJ (numérico e alfanumérico), CEP, telefone, links, horários, coordenadas, senha, e os schemas de cadastro, local e busca |
+| `api` | Base de municípios do IBGE, hash do documento e as rotas (validação, autenticação e formato dos erros), incluindo um teste de regressão para erros de validação que viravam 500 |
+| `web` | Leitura e escrita dos filtros da busca na URL |
+
+A cada push, o GitHub Actions confere os tipos, roda os testes e faz o build do site (`.github/workflows/ci.yml`).
+
 ## API (v1)
 
 Base: `/api/v1`
@@ -113,5 +131,5 @@ Base: `/api/v1`
 
 - Autenticação em dois fatores (TOTP) e confirmação de e-mail
 - Edição de horários no painel do comerciante
-- Testes automatizados e pipeline de CI
+- Testes de ponta a ponta (Playwright) e testes de integração com banco
 - Geocodificação do endereço para preencher as coordenadas sozinho

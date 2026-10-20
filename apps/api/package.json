@@ -10,7 +10,8 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
-    "db:seed:cidades": "tsx prisma/seed-cidades.ts"
+    "db:seed:cidades": "tsx prisma/seed-cidades.ts",
+    "test": "vitest run"
   },
   "dependencies": {
     "@fastify/compress": "^9.2.2",
@@ -33,6 +34,7 @@
     "@types/node": "^22.13.9",
     "prisma": "^6.4.1",
     "tsx": "^4.19.3",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^5.0.5"
   }
 }

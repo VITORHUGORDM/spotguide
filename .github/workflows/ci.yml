@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+
+# um push novo cancela a execução antiga da mesma branch
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificar:
+    name: Tipos, testes e build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      # sem API no CI: as páginas geradas no build usam os dados de reserva
+      NEXT_PUBLIC_API_URL: http://127.0.0.1:9/api/v1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      - name: Gerar o Prisma Client
+        run: pnpm --filter @guia/api exec prisma generate
+
+      - name: Compilar os contratos
+        run: pnpm --filter @guia/contracts build
+
+      - name: Checar tipos
+        run: |
+          pnpm --filter @guia/contracts exec tsc --noEmit -p .
+          pnpm --filter @guia/api exec tsc --noEmit -p .
+          pnpm --filter @guia/web exec tsc --noEmit -p .
+
+      - name: Testes
+        run: pnpm test
+
+      - name: Build do site
+        run: pnpm --filter @guia/web build
