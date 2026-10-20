@@ -51,7 +51,23 @@ export function errorHandler(error: FastifyError, request: FastifyRequest, reply
     return reply.status(404).send({ statusCode: 404, error: 'Not Found', message: 'Registro não encontrado.' });
   }
 
-  // 5. Erros não tratados (Internal Server Error)
+  // 5. Erros do próprio Fastify e dos plugins já trazem o status certo (429 do rate limit, JSON malformado...)
+  if (error.statusCode === 429) {
+    return reply.status(429).send({
+      statusCode: 429,
+      error: 'Too Many Requests',
+      message: 'Muitas tentativas seguidas. Aguarde um minuto e tente de novo.',
+    });
+  }
+  if (error.statusCode && error.statusCode >= 400 && error.statusCode < 500) {
+    return reply.status(error.statusCode).send({
+      statusCode: error.statusCode,
+      error: 'Bad Request',
+      message: error.message,
+    });
+  }
+
+  // 6. Erros não tratados (Internal Server Error)
   // SEGURANÇA: NUNCA expor stack traces ou dados sensíveis do banco para o cliente
   request.log.error(error);
 

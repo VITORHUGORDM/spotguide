@@ -22,6 +22,8 @@ export function buildApp() {
   const app = fastify({
     logger: env.NODE_ENV === 'development',
     disableRequestLogging: env.NODE_ENV === 'production',
+    // request.ip passa a ser o do visitante (X-Forwarded-For), e o rate limit vale por pessoa
+    trustProxy: env.TRUST_PROXY,
   });
 
   // 1. Headers de Segurança HTTP (Helmet)
