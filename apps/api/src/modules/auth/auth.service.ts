@@ -4,6 +4,27 @@ import { HashService } from '../../shared/security/hash.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { protegeDocumento } from '../../shared/security/document.js';
 
+// Sanitização para Data Exposure (retorna somente UserResponse)
+function paraResposta(user: {
+  id: string;
+  name: string;
+  email: string;
+  role: UserResponse['role'];
+  avatarUrl: string | null;
+  isVerified: boolean;
+  createdAt: Date;
+}): UserResponse {
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    avatarUrl: user.avatarUrl,
+    isVerified: user.isVerified,
+    createdAt: user.createdAt.toISOString(),
+  };
+}
+
 export class AuthService {
   async register(data: RegisterInput): Promise<UserResponse> {
     const existingUser = await prisma.user.findUnique({
@@ -35,19 +56,10 @@ export class AuthService {
       },
     });
 
-    // Sanitização para Data Exposure (retorna somente UserResponse)
-    return {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      avatarUrl: user.avatarUrl,
-      isVerified: user.isVerified,
-      createdAt: user.createdAt.toISOString(),
-    };
+    return paraResposta(user);
   }
 
-  async validateCredentials(data: LoginInput) {
+  async validateCredentials(data: LoginInput): Promise<UserResponse> {
     const user = await prisma.user.findUnique({
       where: { email: data.email },
     });
@@ -63,6 +75,11 @@ export class AuthService {
       throw new AppError('E-mail ou senha incorretos.', 401);
     }
 
-    return user;
+    return paraResposta(user);
+  }
+
+  async findById(id: string): Promise<UserResponse | null> {
+    const user = await prisma.user.findUnique({ where: { id } });
+    return user ? paraResposta(user) : null;
   }
 }

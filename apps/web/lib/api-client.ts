@@ -241,6 +241,17 @@ export class ApiClient {
     return res.json();
   }
 
+  /** Troca o refresh token por um par novo. 401 quer dizer sessão encerrada de vez. */
+  static async refresh(refreshToken: string): Promise<AuthResponse> {
+    const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    });
+    if (!res.ok) throw await leErro(res, 'Sessão expirada');
+    return res.json();
+  }
+
   static async getMe(token: string): Promise<any> {
     const res = await fetch(`${API_BASE_URL}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },

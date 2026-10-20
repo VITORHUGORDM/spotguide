@@ -45,6 +45,13 @@ export const LoginInputSchema = z.object({
 
 export type LoginInput = z.infer<typeof LoginInputSchema>;
 
+// Troca o refresh token por um par novo (o antigo deixa de ser guardado pelo cliente)
+export const RefreshInputSchema = z.object({
+  refreshToken: z.string().min(1).max(2000),
+}).strict();
+
+export type RefreshInput = z.infer<typeof RefreshInputSchema>;
+
 // Resposta Pública do Usuário - Proteção contra Data Exposure (Sem password_hash)
 export const UserResponseSchema = z.object({
   id: z.string().uuid(),

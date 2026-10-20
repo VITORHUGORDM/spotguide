@@ -70,6 +70,32 @@ describe('autenticação', () => {
     expect(res.statusCode).toBe(401);
   });
 
+  it('refresh recusa token inventado, vencido ou de acesso', async () => {
+    const base = { sub: '00000000-0000-0000-0000-000000000000', role: 'TRAVELER' as const, email: 'a@b.com' };
+    const deAcesso = app.jwt.sign({ ...base, type: 'access' });
+    const vencido = app.jwt.sign(
+      { ...base, type: 'refresh', exp: Math.floor(Date.now() / 1000) - 10 },
+      { key: process.env.REFRESH_TOKEN_SECRET }
+    );
+    for (const refreshToken of ['token.falso.qualquer', deAcesso, vencido]) {
+      const res = await app.inject({ method: 'POST', url: '/api/v1/auth/refresh', payload: { refreshToken } });
+      expect(res.statusCode).toBe(401);
+    }
+  });
+
+  it('refresh token não serve como token de acesso', async () => {
+    const refresh = app.jwt.sign(
+      { sub: '00000000-0000-0000-0000-000000000000', role: 'MERCHANT', email: 'a@b.com', type: 'refresh' },
+      { key: process.env.REFRESH_TOKEN_SECRET }
+    );
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/v1/places/merchant/my-places',
+      headers: { authorization: `Bearer ${refresh}` },
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
   it('não aceita token inventado', async () => {
     const res = await app.inject({
       method: 'POST',
