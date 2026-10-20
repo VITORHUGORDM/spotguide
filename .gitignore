@@ -36,3 +36,5 @@ apps/api/uploads/
 .agents/
 .claude/
 brag-output*/
+AGENTS.md
+CLAUDE.md
