@@ -5,6 +5,7 @@ import { AppError } from '../../shared/errors/app-error.js';
 import { limpaCaches } from '../../shared/cache.js';
 import { coordenadasNoBrasil } from '@guia/contracts/validadores';
 import { municipioNaUf } from '../../shared/geo/municipios.js';
+import { apagaArquivoDaFoto } from '../photos/photos.service.js';
 
 /**
  * Confere o que o formulário não consegue garantir sozinho: a cidade existe naquele estado
@@ -177,6 +178,8 @@ export class PlacesService {
     }
     const removido = await this.placesRepository.delete(id);
     limpaCaches();
+    // o banco apaga as fotos em cascata, mas os arquivos ficariam esquecidos na pasta de uploads
+    await Promise.all(place.photos.map((f) => apagaArquivoDaFoto(f.url)));
     return removido;
   }
 }

@@ -16,29 +16,49 @@ function detectaTipo(buf: Buffer): { ext: 'jpg' | 'png' | 'webp' } | null {
   return null;
 }
 
+/** Apaga do disco a foto enviada para cá; links externos (capa por URL, dados de exemplo) ficam como estão. */
+export async function apagaArquivoDaFoto(url: string) {
+  if (!url.startsWith(`${env.PUBLIC_URL}/uploads/places/`)) return;
+  const nome = path.basename(new URL(url).pathname);
+  await unlink(path.join(UPLOADS_DIR, 'places', nome)).catch(() => {});
+}
+
 export class PhotosService {
   async add(placeId: string, buf: Buffer, caption?: string) {
     const tipo = detectaTipo(buf);
     if (!tipo) throw new AppError('Envie uma imagem JPG, PNG ou WebP.', 415);
 
-    const total = await prisma.placePhoto.count({ where: { placeId } });
-    if (total >= MAX_FOTOS_POR_LOCAL) {
-      throw new AppError(`Limite de ${MAX_FOTOS_POR_LOCAL} fotos por estabelecimento.`, 400);
-    }
-
     const nome = `${randomUUID()}.${tipo.ext}`;
-    await mkdir(path.join(UPLOADS_DIR, 'places'), { recursive: true });
-    await writeFile(path.join(UPLOADS_DIR, 'places', nome), buf);
+    const url = `${env.PUBLIC_URL}/uploads/places/${nome}`;
 
-    return prisma.placePhoto.create({
-      data: {
-        placeId,
-        url: `${env.PUBLIC_URL}/uploads/places/${nome}`,
-        caption: caption?.slice(0, 100) || null,
-        displayOrder: total,
-        isCover: total === 0, // a primeira foto vira a capa
-      },
-    });
+    try {
+      return await prisma.$transaction(async (tx) => {
+        // trava o local: dois envios ao mesmo tempo contavam 7 fotos cada e passavam do limite
+        await tx.$queryRaw`SELECT id FROM places WHERE id = ${placeId}::uuid FOR UPDATE`;
+
+        const total = await tx.placePhoto.count({ where: { placeId } });
+        if (total >= MAX_FOTOS_POR_LOCAL) {
+          throw new AppError(`Limite de ${MAX_FOTOS_POR_LOCAL} fotos por estabelecimento.`, 400);
+        }
+
+        await mkdir(path.join(UPLOADS_DIR, 'places'), { recursive: true });
+        await writeFile(path.join(UPLOADS_DIR, 'places', nome), buf);
+
+        return tx.placePhoto.create({
+          data: {
+            placeId,
+            url,
+            caption: caption?.slice(0, 100) || null,
+            displayOrder: total,
+            isCover: total === 0, // a primeira foto vira a capa
+          },
+        });
+      });
+    } catch (err) {
+      // não deixa arquivo sem registro no banco
+      await apagaArquivoDaFoto(url);
+      throw err;
+    }
   }
 
   async remove(placeId: string, photoId: string) {
@@ -46,12 +66,7 @@ export class PhotosService {
     if (!foto) throw new AppError('Foto não encontrada.', 404);
 
     await prisma.placePhoto.delete({ where: { id: foto.id } });
-
-    // apaga o arquivo só se ele estiver na nossa pasta de uploads
-    const nome = path.basename(new URL(foto.url).pathname);
-    if (foto.url.startsWith(`${env.PUBLIC_URL}/uploads/places/`)) {
-      await unlink(path.join(UPLOADS_DIR, 'places', nome)).catch(() => {});
-    }
+    await apagaArquivoDaFoto(foto.url);
 
     // se removeu a capa, a primeira que sobrar assume
     if (foto.isCover) {
