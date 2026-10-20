@@ -31,3 +31,8 @@ Thumbs.db
 # Fotos enviadas por comerciantes (em produção use S3/Cloudinary)
 apps/api/uploads/
 .next-prod
+
+# Ferramentas locais de IA e material de divulgação (não fazem parte do código)
+.agents/
+.claude/
+brag-output*/

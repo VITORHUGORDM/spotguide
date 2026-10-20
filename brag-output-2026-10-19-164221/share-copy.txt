@@ -1,1 +1,0 @@
-SpotGuide: o guia turístico que abre como uma ilha flutuante e termina no mapa, com rota e nota de quem foi.
