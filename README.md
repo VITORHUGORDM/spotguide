@@ -1,4 +1,4 @@
-# 🗺️ Plataforma Guia Turístico & Comercial (SpotGuide)
+#  Plataforma Guia Turístico & Comercial (SpotGuide)
 
 > Arquitetura corporativa em Monorepo (Clean Architecture, DDD, Security by Design) servindo Web (Next.js), Mobile (React Native / Expo) e Backend API (Node.js / Fastify / PostgreSQL).
 
