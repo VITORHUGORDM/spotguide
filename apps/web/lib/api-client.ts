@@ -92,6 +92,21 @@ function cacheInit(revalidate?: number): RequestInit {
   return typeof window === 'undefined' ? { cache: 'no-store' } : {};
 }
 
+export interface RoteiroResumo {
+  id: string;
+  title: string;
+  isPublic: boolean;
+  totalStops: number;
+}
+
+export interface Roteiro {
+  id: string;
+  title: string;
+  isPublic: boolean;
+  isOwner: boolean;
+  stops: PlaceListItem[];
+}
+
 export class ApiClient {
   static async getCategories(): Promise<CategoryResponse[]> {
     const res = await fetch(`${API_BASE_URL}/categories`, cacheInit(3600));
@@ -166,7 +181,8 @@ export class ApiClient {
     const res = await fetch(`${API_BASE_URL}/places/slug/${slug}`, {
       next: { revalidate: 10 },
     });
-    if (!res.ok) throw new Error('Estabelecimento não encontrado');
+    // o status importa: só 404 é "não encontrado"; 429/5xx são falha momentânea
+    if (!res.ok) throw await leErro(res, 'Estabelecimento não encontrado');
     return res.json();
   }
 
@@ -238,6 +254,16 @@ export class ApiClient {
       body: JSON.stringify(data),
     });
     if (!res.ok) throw await leErro(res, 'Erro ao realizar cadastro');
+    return res.json();
+  }
+
+  static async refresh(refreshToken: string): Promise<{ accessToken: string }> {
+    const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    });
+    if (!res.ok) throw await leErro(res, 'Sessão expirada');
     return res.json();
   }
 
@@ -319,6 +345,60 @@ export class ApiClient {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) throw new Error('Erro ao trocar a capa');
+  }
+
+  // Favoritos (precisam de login)
+  static async getFavorites(token: string): Promise<PlaceListItem[]> {
+    const res = await fetch(`${API_BASE_URL}/favorites`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' });
+    if (!res.ok) throw new Error('Falha ao carregar seus favoritos');
+    return res.json();
+  }
+
+  static async setFavorite(placeId: string, favorito: boolean, token: string): Promise<void> {
+    const res = await fetch(`${API_BASE_URL}/favorites/${placeId}`, {
+      method: favorito ? 'PUT' : 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw await leErro(res, 'Não foi possível atualizar seus favoritos');
+  }
+
+  // Roteiros: o público abre sem login (token opcional); o resto exige
+  private static roteiroInit(method: string, token?: string | null, body?: object): RequestInit {
+    return {
+      method,
+      cache: 'no-store',
+      headers: { ...(token && { Authorization: `Bearer ${token}` }), ...(body && { 'Content-Type': 'application/json' }) },
+      body: body && JSON.stringify(body),
+    };
+  }
+
+  static async getRoteiros(token: string): Promise<RoteiroResumo[]> {
+    const res = await fetch(`${API_BASE_URL}/itineraries`, this.roteiroInit('GET', token));
+    if (!res.ok) throw new Error('Falha ao carregar seus roteiros');
+    return res.json();
+  }
+
+  static async createRoteiro(title: string, token: string): Promise<RoteiroResumo> {
+    const res = await fetch(`${API_BASE_URL}/itineraries`, this.roteiroInit('POST', token, { title }));
+    if (!res.ok) throw await leErro(res, 'Erro ao criar o roteiro');
+    return { totalStops: 0, ...(await res.json()) };
+  }
+
+  static async getRoteiro(id: string, token?: string | null): Promise<Roteiro> {
+    const res = await fetch(`${API_BASE_URL}/itineraries/${id}`, this.roteiroInit('GET', token));
+    if (!res.ok) throw await leErro(res, 'Roteiro não encontrado');
+    return res.json();
+  }
+
+  static async updateRoteiro(id: string, data: { title?: string; isPublic?: boolean; placeIds?: string[] }, token: string): Promise<Roteiro> {
+    const res = await fetch(`${API_BASE_URL}/itineraries/${id}`, this.roteiroInit('PUT', token, data));
+    if (!res.ok) throw await leErro(res, 'Erro ao salvar o roteiro');
+    return res.json();
+  }
+
+  static async deleteRoteiro(id: string, token: string): Promise<void> {
+    const res = await fetch(`${API_BASE_URL}/itineraries/${id}`, this.roteiroInit('DELETE', token));
+    if (!res.ok) throw await leErro(res, 'Erro ao apagar o roteiro');
   }
 
   static async deletePlace(id: string, token: string): Promise<void> {

@@ -239,3 +239,6 @@ export const PlaceDetailSchema = PlaceListItemSchema.extend({
 });
 
 export type PlaceDetail = z.infer<typeof PlaceDetailSchema>;
+
+// Favoritos: o id do local vem na URL, então é validado antes de chegar ao banco
+export const FavoriteParamsSchema = z.object({ placeId: z.string().uuid('Identificador inválido') }).strict();

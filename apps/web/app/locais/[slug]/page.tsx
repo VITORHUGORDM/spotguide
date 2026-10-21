@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ApiClient } from '../../../lib/api-client';
+import { ApiClient, ApiError } from '../../../lib/api-client';
 import { SITE_URL } from '../../../lib/cidades';
+import { AddToRoteiro } from '../../../components/add-to-roteiro';
+import { FavoriteButton } from '../../../components/favorite-button';
 import { PlaceReviews } from '../../../components/place-reviews';
 import {
   MapPin,
@@ -65,10 +67,12 @@ export default async function PlaceDetailPage({
 
   try {
     place = await ApiClient.getPlaceBySlug(slug);
-    reviews = await ApiClient.getPlaceReviews(place.id);
   } catch (err) {
-    notFound();
+    if (err instanceof ApiError && err.status === 404) notFound();
+    throw err; // falha momentânea: mostra app/error.tsx em vez de um 404 falso
   }
+  // sem as avaliações a página ainda serve; elas só ficam vazias
+  reviews = await ApiClient.getPlaceReviews(place.id).catch(() => []);
 
   // a API devolve só a lista de fotos: a capa é a marcada como capa (ou a primeira)
   const capa = place.photos?.find((f) => f.isCover) ?? place.photos?.[0];
@@ -150,9 +154,13 @@ export default async function PlaceDetailPage({
               )}
             </div>
 
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight">
-              {place.name}
-            </h1>
+            <div className="flex items-start gap-4">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight">
+                {place.name}
+              </h1>
+              <FavoriteButton placeId={place.id} className="shrink-0 mt-1" />
+            </div>
+            <AddToRoteiro placeId={place.id} />
 
             <div className="flex flex-wrap items-center gap-4 text-xs">
               <div className="flex items-center gap-1.5 font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-xl">

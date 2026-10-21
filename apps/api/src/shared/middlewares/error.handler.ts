@@ -51,6 +51,15 @@ export function errorHandler(error: FastifyError, request: FastifyRequest, reply
     return reply.status(404).send({ statusCode: 404, error: 'Not Found', message: 'Registro não encontrado.' });
   }
 
+  // 4b. Rate limit estourado: o plugin lança um erro com statusCode 429 (sem isto caía no 500)
+  if (error.statusCode === 429) {
+    return reply.status(429).send({
+      statusCode: 429,
+      error: 'Too Many Requests',
+      message: 'Muitas tentativas em pouco tempo. Aguarde um instante e tente de novo.',
+    });
+  }
+
   // 5. Erros não tratados (Internal Server Error)
   // SEGURANÇA: NUNCA expor stack traces ou dados sensíveis do banco para o cliente
   request.log.error(error);

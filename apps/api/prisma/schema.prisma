@@ -24,27 +24,28 @@ enum DayOfWeek {
 }
 
 model User {
-  id           String        @id @default(uuid()) @db.Uuid
-  name         String        @db.VarChar(100)
-  email        String        @unique @db.VarChar(255)
-  passwordHash String        @map("password_hash") @db.VarChar(255)
-  role         UserRole      @default(TRAVELER)
-  avatarUrl    String?       @map("avatar_url")
-  isVerified   Boolean       @default(false) @map("is_verified")
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @db.VarChar(100)
+  email        String   @unique @db.VarChar(255)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  role         UserRole @default(TRAVELER)
+  avatarUrl    String?  @map("avatar_url")
+  isVerified   Boolean  @default(false) @map("is_verified")
 
   // CPF/CNPJ do comerciante: guardamos só o hash (para impedir conta duplicada) e uma máscara
   // para a pessoa reconhecer ("***.456.789-**"). O número inteiro nunca fica no banco.
-  documentHash String?       @unique @map("document_hash") @db.Char(64)
-  documentType String?       @map("document_type") @db.VarChar(4)
-  documentMask String?       @map("document_mask") @db.VarChar(20)
+  documentHash String? @unique @map("document_hash") @db.Char(64)
+  documentType String? @map("document_type") @db.VarChar(4)
+  documentMask String? @map("document_mask") @db.VarChar(20)
 
-  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   places        Place[]
   reviews       Review[]
   reviewReplies ReviewReply[]
   favorites     Favorite[]
+  itineraries   Itinerary[]
 
   @@map("users")
 }
@@ -62,24 +63,24 @@ model Category {
 }
 
 model Place {
-  id           String   @id @default(uuid()) @db.Uuid
-  ownerId      String?  @map("owner_id") @db.Uuid
-  categoryId   String   @map("category_id") @db.Uuid
-  name         String   @db.VarChar(150)
-  slug         String   @unique @db.VarChar(180)
-  description  String
-  phone        String?  @db.VarChar(20)
-  websiteUrl   String?  @map("website_url")
+  id          String  @id @default(uuid()) @db.Uuid
+  ownerId     String? @map("owner_id") @db.Uuid
+  categoryId  String  @map("category_id") @db.Uuid
+  name        String  @db.VarChar(150)
+  slug        String  @unique @db.VarChar(180)
+  description String
+  phone       String? @db.VarChar(20)
+  websiteUrl  String? @map("website_url")
 
-  street       String   @db.VarChar(150)
-  number       String   @db.VarChar(20)
-  neighborhood String   @db.VarChar(100)
-  city         String   @db.VarChar(100)
-  state        String   @db.VarChar(50)
-  postalCode   String   @map("postal_code") @db.VarChar(20)
+  street       String @db.VarChar(150)
+  number       String @db.VarChar(20)
+  neighborhood String @db.VarChar(100)
+  city         String @db.VarChar(100)
+  state        String @db.VarChar(50)
+  postalCode   String @map("postal_code") @db.VarChar(20)
 
-  latitude     Float    @db.DoublePrecision
-  longitude    Float    @db.DoublePrecision
+  latitude  Float @db.DoublePrecision
+  longitude Float @db.DoublePrecision
 
   averageRating Decimal @default(0.0) @map("average_rating") @db.Decimal(2, 1)
   totalReviews  Int     @default(0) @map("total_reviews")
@@ -87,18 +88,19 @@ model Place {
   isVerified    Boolean @default(false) @map("is_verified")
 
   // faixa de preço de 1 ($) a 4 ($$$$) e comodidades (ids de COMODIDADES em @guia/contracts)
-  priceLevel    Int?     @map("price_level") @db.SmallInt
-  amenities     String[] @default([])
+  priceLevel Int?     @map("price_level") @db.SmallInt
+  amenities  String[] @default([])
 
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  owner     User?        @relation(fields: [ownerId], references: [id], onDelete: SetNull)
-  category  Category     @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  owner     User?           @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  category  Category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   hours     PlaceHour[]
   photos    PlacePhoto[]
   reviews   Review[]
   favorites Favorite[]
+  stops     ItineraryStop[]
 
   @@index([city, categoryId], map: "idx_places_city_category")
   @@index([latitude, longitude], map: "idx_places_coordinates")
@@ -146,8 +148,8 @@ model Review {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  place Place @relation(fields: [placeId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  place Place        @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   reply ReviewReply?
 
   @@unique([placeId, userId])
@@ -178,4 +180,33 @@ model Favorite {
 
   @@id([userId, placeId])
   @@map("favorites")
+}
+
+// Roteiro: lista ordenada de locais. Só quem tem o link vê, e só se o dono marcar como público.
+model Itinerary {
+  id        String   @id @default(uuid()) @db.Uuid
+  ownerId   String   @map("owner_id") @db.Uuid
+  title     String   @db.VarChar(100)
+  isPublic  Boolean  @default(false) @map("is_public")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  owner User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  stops ItineraryStop[]
+
+  @@index([ownerId, createdAt(sort: Desc)], map: "idx_itineraries_owner")
+  @@map("itineraries")
+}
+
+model ItineraryStop {
+  itineraryId String @map("itinerary_id") @db.Uuid
+  placeId     String @map("place_id") @db.Uuid
+  position    Int    @db.SmallInt
+
+  itinerary Itinerary @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
+  place     Place     @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  @@id([itineraryId, placeId])
+  @@index([itineraryId, position], map: "idx_stops_order")
+  @@map("itinerary_stops")
 }

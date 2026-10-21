@@ -3,13 +3,15 @@ import Link from 'next/link';
 import { MapPin, Star, Navigation } from 'lucide-react';
 import type { PlaceListItem } from '@guia/contracts';
 import { simboloPreco } from '@guia/contracts/comodidades';
+import { FavoriteButton } from '../favorite-button';
 import { CidadeArte, slugCidade } from '../cidade-arte';
 
 function PlaceCardBase({ place, prioridade = false }: { place: PlaceListItem; prioridade?: boolean }) {
   return (
+    <div className="relative flex flex-col">
     <Link
       href={`/locais/${place.slug}`}
-      className="group bg-[#0a0a14]/90 rounded-3xl border border-white/[0.08] overflow-hidden shadow-xl hover:border-purple-500/50 hover:shadow-[0_0_35px_rgba(242,166,90,0.2)] hover:-translate-y-2 transition-all duration-300 flex flex-col justify-between"
+      className="group flex-1 bg-[#0a0a14]/90 rounded-3xl border border-white/[0.08] overflow-hidden shadow-xl hover:border-purple-500/50 hover:shadow-[0_0_35px_rgba(242,166,90,0.2)] hover:-translate-y-2 transition-all duration-300 flex flex-col justify-between"
     >
       <div>
         <div className="relative h-56 bg-zinc-900 overflow-hidden">
@@ -64,6 +66,8 @@ function PlaceCardBase({ place, prioridade = false }: { place: PlaceListItem; pr
         <Navigation className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
       </div>
     </Link>
+    <FavoriteButton placeId={place.id} className="absolute bottom-[4.6rem] right-3.5" />
+    </div>
   );
 }
 

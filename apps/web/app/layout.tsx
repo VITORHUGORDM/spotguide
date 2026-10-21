@@ -4,6 +4,7 @@ import '@fontsource/ibm-plex-mono/400.css';
 import './globals.css';
 import './tema.css';
 import { AuthProvider } from '../lib/auth-context';
+import { FavoritesProvider } from '../lib/favorites-context';
 import { SiteNav } from '../components/site-nav';
 import { SiteFooter } from '../components/site-footer';
 import { SITE_URL } from '../lib/cidades';
@@ -36,9 +37,11 @@ export default function RootLayout({
     <html lang="pt-BR" className="dark">
       <body className="min-h-screen flex flex-col antialiased bg-[#0b0a17] text-[#faf6ee] selection:bg-[#f2a65a] selection:text-[#0b0a17]">
         <AuthProvider>
-          <SiteNav />
-          <main className="flex-1">{children}</main>
-          <SiteFooter />
+          <FavoritesProvider>
+            <SiteNav />
+            <main className="flex-1">{children}</main>
+            <SiteFooter />
+          </FavoritesProvider>
         </AuthProvider>
       </body>
     </html>

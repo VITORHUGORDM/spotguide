@@ -34,5 +34,11 @@ export async function authRoutes(app: FastifyInstance) {
     authController.login.bind(authController)
   );
 
+  app.post(
+    '/refresh',
+    { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } },
+    authController.refresh.bind(authController)
+  );
+
   app.get('/me', { preHandler: [authGuard] }, authController.me.bind(authController));
 }

@@ -46,6 +46,16 @@ export function SiteNav() {
             Destinos
           </Link>
           <Link href={home ? '#cidades' : '/#cidades'}>Cidades</Link>
+          {user && (
+            <>
+              <Link href="/favoritos" aria-current={atual('/favoritos')}>
+                Favoritos
+              </Link>
+              <Link href="/roteiros" aria-current={atual('/roteiros')}>
+                Roteiros
+              </Link>
+            </>
+          )}
           <Link href="/comerciante" aria-current={atual('/comerciante')}>
             Sou comerciante
           </Link>

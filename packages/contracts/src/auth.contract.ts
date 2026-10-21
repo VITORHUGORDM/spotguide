@@ -66,3 +66,6 @@ export const AuthResponseSchema = z.object({
 });
 
 export type AuthResponse = z.infer<typeof AuthResponseSchema>;
+
+// Renovação do login: troca o refresh token (7 dias) por um novo access token (15 min)
+export const RefreshInputSchema = z.object({ refreshToken: z.string().min(1) }).strict();

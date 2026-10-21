@@ -14,6 +14,8 @@ import { authRoutes } from './modules/auth/auth.routes.js';
 import { categoriesRoutes } from './modules/categories/categories.routes.js';
 import { placesRoutes } from './modules/places/places.routes.js';
 import { reviewsRoutes } from './modules/reviews/reviews.routes.js';
+import { favoritesRoutes } from './modules/favorites/favorites.routes.js';
+import { itinerariesRoutes } from './modules/itineraries/itineraries.routes.js';
 import { lookupRoutes } from './modules/lookup/lookup.routes.js';
 import { photosRoutes } from './modules/photos/photos.routes.js';
 import { UPLOADS_DIR } from './modules/photos/photos.service.js';
@@ -37,11 +39,12 @@ export function buildApp() {
   app.register(cors, {
     origin: (origin, cb) => {
       // Permite requisições sem origin (ex: mobile apps ou cURL em dev)
-      if (!origin || allowedOrigins.includes(origin) || env.NODE_ENV === 'development') {
+      if (!origin || allowedOrigins.includes(origin)) {
         cb(null, true);
         return;
       }
-      cb(new Error('Origem não permitida pela política CORS'), false);
+      // sem cabeçalhos CORS o navegador bloqueia a leitura; lançar erro viraria um 500 nos logs
+      cb(null, false);
     },
     credentials: true,
     // o site lê o total de resultados deste cabeçalho
@@ -85,6 +88,8 @@ export function buildApp() {
   app.register(placesRoutes, { prefix: '/api/v1/places' });
   app.register(photosRoutes, { prefix: '/api/v1/places' });
   app.register(reviewsRoutes, { prefix: '/api/v1/reviews' });
+  app.register(favoritesRoutes, { prefix: '/api/v1/favorites' });
+  app.register(itinerariesRoutes, { prefix: '/api/v1/itineraries' });
   app.register(lookupRoutes, { prefix: '/api/v1/lookup' });
 
   return app;

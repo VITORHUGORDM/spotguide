@@ -80,3 +80,78 @@ describe('autenticação', () => {
     expect(res.statusCode).toBe(401);
   });
 });
+
+describe('favoritos', () => {
+  const token = () => app.jwt.sign({ sub: '11111111-1111-4111-8111-111111111111', role: 'TRAVELER', type: 'access' });
+
+  it('exige login em listar, favoritar e desfavoritar', async () => {
+    const id = '22222222-2222-4222-8222-222222222222';
+    for (const [method, url] of [['GET', '/api/v1/favorites'], ['PUT', `/api/v1/favorites/${id}`], ['DELETE', `/api/v1/favorites/${id}`]] as const) {
+      expect((await app.inject({ method, url })).statusCode).toBe(401);
+    }
+  });
+
+  it('recusa refresh token', async () => {
+    const refresh = app.jwt.sign({ sub: '11111111-1111-4111-8111-111111111111', role: 'TRAVELER', type: 'refresh' });
+    const res = await app.inject({ method: 'GET', url: '/api/v1/favorites', headers: { authorization: `Bearer ${refresh}` } });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('recusa id que não é UUID antes de consultar o banco', async () => {
+    const res = await app.inject({ method: 'PUT', url: '/api/v1/favorites/abc', headers: { authorization: `Bearer ${token()}` } });
+    expect(res.statusCode).toBe(400);
+  });
+});
+
+describe('rate limit', () => {
+  // regressão: o limite funcionava, mas o erro chegava como 500
+  it('responde 429 (não 500) depois de 5 logins por minuto', async () => {
+    const tenta = () => app.inject({ method: 'POST', url: '/api/v1/auth/login', payload: {}, remoteAddress: '203.0.113.7' });
+    const codigos: number[] = [];
+    for (let i = 0; i < 7; i++) codigos.push((await tenta()).statusCode);
+    expect(codigos.slice(0, 5).every((c) => c === 400)).toBe(true);
+    expect(codigos.slice(5)).toEqual([429, 429]);
+  });
+});
+
+describe('CORS', () => {
+  const preflight = (origin: string) =>
+    app.inject({ method: 'OPTIONS', url: '/api/v1/favorites/x', headers: { origin, 'access-control-request-method': 'PUT' } });
+
+  it('libera a origem do site e nega as outras, mesmo em desenvolvimento', async () => {
+    expect((await preflight('http://localhost:3000')).headers['access-control-allow-origin']).toBe('http://localhost:3000');
+    expect((await preflight('https://evil.example')).headers['access-control-allow-origin']).toBeUndefined();
+  });
+});
+
+describe('roteiros', () => {
+  const id = '22222222-2222-4222-8222-222222222222';
+  const auth = () => ({ authorization: `Bearer ${app.jwt.sign({ sub: '11111111-1111-4111-8111-111111111111', role: 'TRAVELER', type: 'access' })}` });
+
+  it('exige login para listar, criar, editar e apagar', async () => {
+    for (const [method, url] of [['GET', '/api/v1/itineraries'], ['POST', '/api/v1/itineraries'], ['PUT', `/api/v1/itineraries/${id}`], ['DELETE', `/api/v1/itineraries/${id}`]] as const) {
+      expect((await app.inject({ method, url })).statusCode).toBe(401);
+    }
+  });
+
+  it('recusa id que não é UUID e campos fora do contrato', async () => {
+    expect((await app.inject({ method: 'GET', url: '/api/v1/itineraries/abc' })).statusCode).toBe(400);
+    const put = (payload: object) => app.inject({ method: 'PUT', url: `/api/v1/itineraries/${id}`, headers: auth(), payload });
+    expect((await put({ ownerId: 'x' })).statusCode).toBe(400); // mass assignment
+    expect((await put({})).statusCode).toBe(400);
+    expect((await put({ placeIds: [id, id] })).statusCode).toBe(400); // repetido
+    expect((await put({ placeIds: Array.from({ length: 31 }, (_, i) => `00000000-0000-4000-8000-${String(i).padStart(12, '0')}`) })).statusCode).toBe(400);
+  });
+});
+
+describe('renovação do login', () => {
+  const refresh = (payload: object) => app.inject({ method: 'POST', url: '/api/v1/auth/refresh', payload, remoteAddress: '203.0.113.9' });
+
+  it('recusa token inventado, access token e corpo fora do contrato', async () => {
+    expect((await refresh({ refreshToken: 'falso.falso.falso' })).statusCode).toBe(401);
+    const access = app.jwt.sign({ sub: '11111111-1111-4111-8111-111111111111', role: 'TRAVELER', type: 'access' });
+    expect((await refresh({ refreshToken: access })).statusCode).toBe(401); // access não renova
+    expect((await refresh({})).statusCode).toBe(400);
+    expect((await refresh({ refreshToken: 'x', role: 'ADMIN' })).statusCode).toBe(400);
+  });
+});
