@@ -28,7 +28,7 @@ type PlaceCompleto = NonNullable<Awaited<ReturnType<PlacesRepository['findById']
  * Só o que a página pública mostra (PlaceDetail). O registro bruto levava junto ownerId, isActive e
  * datas internas, e a nota ia como texto (Decimal).
  */
-function paraDetalhe(p: PlaceCompleto): PlaceDetail {
+export function paraDetalhe(p: PlaceCompleto): PlaceDetail {
   const capa = p.photos.find((f) => f.isCover) ?? p.photos[0];
   return {
     id: p.id,
