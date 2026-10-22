@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import '@fontsource-variable/archivo/wdth.css';
@@ -9,7 +8,6 @@ import '@fontsource/ibm-plex-mono/400.css';
 import './hero.css';
 
 import { IlhaSvg } from './ilha-svg';
-import { CidadeArte } from '../cidade-arte';
 import { MURO, NUVENS, CHIPS } from '../../lib/hero-data';
 import { Utensils, Coffee, Beer, Hotel, Camera, ShoppingBag } from 'lucide-react';
 import type { GuiaStats } from '../../lib/guia-stats';
@@ -67,9 +65,6 @@ function Pin() {
 export function Hero({ stats }: { stats: GuiaStats }) {
   const ref = useRef<HTMLElement>(null);
   const router = useRouter();
-  const janela = useRef<HTMLDivElement>(null);
-  const [montado, setMontado] = useState(false);
-  useEffect(() => setMontado(true), []);
   const hora = useRef<HTMLSpanElement>(null);
   const lugares = useRef<HTMLSpanElement>(null);
   const nota = useRef<HTMLSpanElement>(null);
@@ -119,9 +114,9 @@ export function Hero({ stats }: { stats: GuiaStats }) {
 
   // clique simples abre o portal; ctrl/cmd/shift/botão do meio seguem o link normal
   const portal = (href: string) => (e: React.MouseEvent) => {
-    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || !ref.current || !janela.current) return;
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || !ref.current) return;
     e.preventDefault();
-    import('./motion/portal').then((m) => m.abrirPortal(ref.current!, janela.current!, href, router.push));
+    import('./motion/portal').then((m) => m.abrirPortal(ref.current!, href, router.push));
   };
 
   return (
@@ -295,18 +290,6 @@ export function Hero({ stats }: { stats: GuiaStats }) {
         <div className="veu" data-saida="veu" aria-hidden="true" />
         <div className="veu-entrada" data-entrada-veu aria-hidden="true" />
       </div>
-
-      {/* Janela do portal: no body (fora das camadas em movimento) e fechada até o clique */}
-      {montado &&
-        createPortal(
-          <div ref={janela} className="portal-janela" aria-hidden="true">
-            <div className="portal-janela__arte">
-              <CidadeArte slug="gramado" />
-            </div>
-            <span className="portal-janela__rotulo">Próximo: locais · Gramado, RS</span>
-          </div>,
-          document.body
-        )}
     </section>
   );
 }
