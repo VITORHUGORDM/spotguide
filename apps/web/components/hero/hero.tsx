@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import '@fontsource-variable/archivo/wdth.css';
 import '@fontsource/ibm-plex-mono/400.css';
 import './hero.css';
@@ -63,6 +64,7 @@ function Pin() {
 
 export function Hero({ stats }: { stats: GuiaStats }) {
   const ref = useRef<HTMLElement>(null);
+  const router = useRouter();
   const hora = useRef<HTMLSpanElement>(null);
   const lugares = useRef<HTMLSpanElement>(null);
   const nota = useRef<HTMLSpanElement>(null);
@@ -110,6 +112,13 @@ export function Hero({ stats }: { stats: GuiaStats }) {
     };
   }, [stats]);
 
+  // clique simples abre o portal; ctrl/cmd/shift/botão do meio seguem o link normal
+  const portal = (href: string) => (e: React.MouseEvent) => {
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || !ref.current) return;
+    e.preventDefault();
+    import('./motion/portal').then((m) => m.abrirPortal(ref.current!, href, router.push));
+  };
+
   return (
     <section ref={ref} id="topo" className="hero" data-entrada="pendente" data-visivel="true">
       <div className="hero__stage">
@@ -147,7 +156,7 @@ export function Hero({ stats }: { stats: GuiaStats }) {
         {/* 4. A ilha */}
         <div className="camada camada--ilha" data-camada="ilha" data-prof="0.58" data-sobe="0.6" data-escala="0.86">
           <div className="camada__in" data-in="ilha">
-            <div className="ilha-box">
+            <div className="ilha-box" onClick={portal('/locais')}>
               <div className="ilha-float">
                 <div className="ilha-nevoa" />
                 <IlhaSvg />
@@ -260,7 +269,7 @@ export function Hero({ stats }: { stats: GuiaStats }) {
                 ))}
               </p>
               <div className="hero__acoes" data-in="fade">
-                <Link href="/locais" className="botao-pilula">
+                <Link href="/locais" className="botao-pilula" onClick={portal('/locais')}>
                   <span>Explorar locais</span>
                   <span className="botao-pilula__circulo" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
