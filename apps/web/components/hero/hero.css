@@ -155,6 +155,8 @@
   height: 100%;
   overflow: visible;
   user-select: none;
+  pointer-events: auto; /* só nas partes pintadas: o clique abre o portal */
+  cursor: pointer;
 }
 .ilha-feixe {
   transform-origin: 1150px 249px;
