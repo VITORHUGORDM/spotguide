@@ -118,6 +118,8 @@ export function Hero({ stats }: { stats: GuiaStats }) {
     e.preventDefault();
     import('./motion/portal').then((m) => m.abrirPortal(ref.current!, href, router.push));
   };
+  // no hover (ou toque) já carrega a página de destino que o portal vai mostrar
+  const aquece = (href: string) => () => void import('./motion/portal').then((m) => m.preparaPortal(href));
 
   return (
     <section ref={ref} id="topo" className="hero" data-entrada="pendente" data-visivel="true">
@@ -156,7 +158,7 @@ export function Hero({ stats }: { stats: GuiaStats }) {
         {/* 4. A ilha */}
         <div className="camada camada--ilha" data-camada="ilha" data-prof="0.58" data-sobe="0.6" data-escala="0.86">
           <div className="camada__in" data-in="ilha">
-            <div className="ilha-box" onClick={portal('/locais')}>
+            <div className="ilha-box" onClick={portal('/locais')} onPointerEnter={aquece('/locais')}>
               <div className="ilha-float">
                 <div className="ilha-nevoa" />
                 <IlhaSvg />
@@ -269,7 +271,7 @@ export function Hero({ stats }: { stats: GuiaStats }) {
                 ))}
               </p>
               <div className="hero__acoes" data-in="fade">
-                <Link href="/locais" className="botao-pilula" onClick={portal('/locais')}>
+                <Link href="/locais" className="botao-pilula" onClick={portal('/locais')} onPointerEnter={aquece('/locais')} onTouchStart={aquece('/locais')}>
                   <span>Explorar locais</span>
                   <span className="botao-pilula__circulo" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">

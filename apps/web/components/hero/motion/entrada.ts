@@ -30,7 +30,7 @@ export function criarEntrada(hero: HTMLElement, hud: ElsHud, alvo: AlvoHud): gsa
     .fromTo(
       q('[data-in="ilha"]'),
       { opacity: 0, yPercent: 20, scale: 0.94 },
-      { opacity: 1, yPercent: 0, scale: 1, duration: 2.8 },
+      { opacity: 1, yPercent: 0, scale: 1, duration: 2.5 },
       0.5
     )
     .fromTo(q('[data-in="frente"]'), { opacity: 0, yPercent: 8 }, { opacity: 1, yPercent: 0, duration: 2 }, 1.1)
