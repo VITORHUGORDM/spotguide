@@ -199,6 +199,13 @@ export function IlhaSvg() {
   ];
 
   return (
+    <>
+    {/* As partes que se mexem ficam em SVGs próprios: dentro do principal, qualquer quadro repintaria a ilha toda
+        (turbulência, desfoque e mistura). Os ids de gradiente e clip vêm do SVG principal. */}
+    <svg className="ilha-svg ilha-anim ilha-cachoeira" viewBox="0 150 1446 850" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+        <path d="M168 668 q-6 120 2 326" stroke="url(#il-cachoeira)" strokeWidth="14" fill="none" strokeLinecap="round" />
+        <path d="M178 672 q-4 100 0 280" stroke="url(#il-cachoeira)" strokeWidth="6" fill="none" strokeLinecap="round" />
+    </svg>
     <svg
       className="ilha-svg"
       viewBox="0 150 1446 850"
@@ -261,12 +268,6 @@ export function IlhaSvg() {
           <path d={corpo.d} />
         </clipPath>
       </defs>
-
-      {/* cachoeira que cai da borda esquerda */}
-      <g className="ilha-cachoeira">
-        <path d="M168 668 q-6 120 2 326" stroke="url(#il-cachoeira)" strokeWidth="14" fill="none" strokeLinecap="round" />
-        <path d="M178 672 q-4 100 0 280" stroke="url(#il-cachoeira)" strokeWidth="6" fill="none" strokeLinecap="round" />
-      </g>
 
       {/* raízes penduradas */}
       <g stroke="#6b4527" fill="none" strokeLinecap="round">
@@ -372,10 +373,6 @@ export function IlhaSvg() {
         <circle cx="1150" cy="192" r="5" fill="#3a3347" />
         <rect x="1138" y="480" width="24" height="42" rx="12" fill="#2a3b66" />
         <rect x="1140" y="396" width="20" height="14" rx="3" fill="#2a3b66" />
-        <g className="ilha-feixe" filter="url(#il-borra)">
-          <path d="M1150 249 L760 214 L760 292Z" fill="url(#il-feixe)" />
-          <path d="M1150 249 L1380 232 L1380 280Z" fill="url(#il-feixe)" opacity=".45" />
-        </g>
       </g>
 
       {/* palmeiras do fundo */}
@@ -454,17 +451,6 @@ export function IlhaSvg() {
       <g>
         <ellipse cx="1134" cy="640" rx="84" ry="16" fill="url(#il-pin-brilho)" />
         <ellipse cx="1134" cy="642" rx="30" ry="7" fill="#2b1a10" opacity=".45" />
-        <g className="ilha-pin">
-          <g transform="translate(1134 642) scale(5.6) translate(-12 -32)">
-            <path
-              d="M12 0C5.4 0 0 5.3 0 11.8 0 20.5 12 32 12 32s12-11.5 12-20.2C24 5.3 18.6 0 12 0Z"
-              fill="url(#il-pin)"
-            />
-            <path d="M12 0C5.4 0 0 5.3 0 11.8 0 20.5 12 32 12 32s12-11.5 12-20.2C24 5.3 18.6 0 12 0Z" fill="url(#il-sombra-lado)" opacity=".8" />
-            <circle cx="12" cy="11.6" r="4.9" fill="#faf6ee" />
-            <path d="M5 6 Q8 2.5 12 2.2" stroke="#fff" strokeWidth="1.2" fill="none" opacity=".6" strokeLinecap="round" />
-          </g>
-        </g>
       </g>
 
       {/* arbustos de primeiro plano */}
@@ -496,5 +482,25 @@ export function IlhaSvg() {
         <rect x="0" y="0" width="1446" height="994" fill="url(#il-sombra-lado)" />
       </g>
     </svg>
+    <svg className="ilha-svg ilha-anim ilha-feixe" viewBox="0 150 1446 850" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+      <g clipPath="url(#il-corpo)">
+        <g filter="url(#il-borra)">
+          <path d="M1150 249 L760 214 L760 292Z" fill="url(#il-feixe)" />
+          <path d="M1150 249 L1380 232 L1380 280Z" fill="url(#il-feixe)" opacity=".45" />
+        </g>
+      </g>
+    </svg>
+    <svg className="ilha-svg ilha-anim ilha-pin" viewBox="0 150 1446 850" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+          <g transform="translate(1134 642) scale(5.6) translate(-12 -32)">
+            <path
+              d="M12 0C5.4 0 0 5.3 0 11.8 0 20.5 12 32 12 32s12-11.5 12-20.2C24 5.3 18.6 0 12 0Z"
+              fill="url(#il-pin)"
+            />
+            <path d="M12 0C5.4 0 0 5.3 0 11.8 0 20.5 12 32 12 32s12-11.5 12-20.2C24 5.3 18.6 0 12 0Z" fill="url(#il-sombra-lado)" opacity=".8" />
+            <circle cx="12" cy="11.6" r="4.9" fill="#faf6ee" />
+            <path d="M5 6 Q8 2.5 12 2.2" stroke="#fff" strokeWidth="1.2" fill="none" opacity=".6" strokeLinecap="round" />
+          </g>
+    </svg>
+    </>
   );
 }
